@@ -10,9 +10,9 @@
 
 ## 🌐 Sample App Online
 
-You can test and sample the live application directly in your browser via the Streaming Android Emulator:
+You can sample the web app directly in your browser:
 
-👉 **[Launch Live Web Sample](https://ais-pre-uu73w2zheoinds5l5cxbod-651608772304.us-east1.run.app)**
+👉 **[Launch Live Web Sample](https://drinkyourwater.base44.app)**
 
 ---
 
