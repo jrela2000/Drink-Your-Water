@@ -17,7 +17,7 @@ import com.example.data.model.UserProfile
         UserProfile::class
     ],
     version = 1,
-    exportSchema = false
+    exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun reminderDao(): ReminderDao
@@ -36,7 +36,12 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "drink_your_water_database"
                 )
-                    .fallbackToDestructiveMigration()
+                    // Deliberately no fallbackToDestructiveMigration(): a future version bump
+                    // with no matching Migration should crash loudly during development so the
+                    // missing migration gets written, instead of silently wiping every user's
+                    // reminders/streaks/history in production. Downgrades (installing an older
+                    // debug build over a newer one) are dev-only and safe to reset.
+                    .fallbackToDestructiveMigrationOnDowngrade()
                     .build()
                 INSTANCE = instance
                 instance

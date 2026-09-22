@@ -59,6 +59,12 @@ android {
   }
 }
 
+// Exports each database version's schema as JSON under app/schemas, so a future
+// Migration can be tested against the real historical schema instead of guesswork.
+ksp {
+  arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 // Some unused dependencies are commented out below instead of being removed.
 // This makes it easy to add them back in the future if needed.
 dependencies {
