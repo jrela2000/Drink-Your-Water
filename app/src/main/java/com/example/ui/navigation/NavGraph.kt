@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -28,12 +29,23 @@ import com.example.ui.viewmodel.WaterViewModel
 fun MainAppNavGraph(
     viewModel: WaterViewModel,
     uiState: WaterUiState,
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    pendingReminderId: Long? = null,
+    onPendingReminderConsumed: () -> Unit = {}
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: "home"
 
     val isMainTab = currentRoute in listOf("home", "progress", "settings")
+
+    // Opens the lock overlay directly when the app was launched (or resumed) from a
+    // reminder notification tap.
+    LaunchedEffect(pendingReminderId) {
+        if (pendingReminderId != null) {
+            navController.navigate("lock_overlay/$pendingReminderId")
+            onPendingReminderConsumed()
+        }
+    }
 
     Scaffold(
         bottomBar = {
@@ -161,7 +173,7 @@ fun MainAppNavGraph(
                             scheduledTime = time,
                             frequency = freq
                         )
-                        viewModel.toggleReminder(reminderToSave.id, reminderToSave.isActive)
+                        viewModel.saveReminder(reminderToSave)
                         navController.popBackStack()
                     },
                     onNavigateBack = { navController.popBackStack() }

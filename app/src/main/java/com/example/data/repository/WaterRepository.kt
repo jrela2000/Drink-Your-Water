@@ -118,6 +118,14 @@ class WaterRepository(private val db: AppDatabase) {
         return db.reminderDao().getReminderById(id)
     }
 
+    suspend fun getAllRemindersOnce(): List<Reminder> {
+        return db.reminderDao().getAllRemindersDirect()
+    }
+
+    suspend fun getRemindersForFrameworkOnce(frameworkId: Long): List<Reminder> {
+        return db.reminderDao().getRemindersForFrameworkDirect(frameworkId)
+    }
+
     suspend fun insertOrUpdateReminder(reminder: Reminder): Long {
         return db.reminderDao().insertReminder(reminder)
     }

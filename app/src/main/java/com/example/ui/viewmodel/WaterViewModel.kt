@@ -9,6 +9,7 @@ import com.example.data.model.Framework
 import com.example.data.model.Reminder
 import com.example.data.model.UserProfile
 import com.example.data.repository.WaterRepository
+import com.example.reminders.ReminderScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -33,6 +34,11 @@ class WaterViewModel(application: Application) : AndroidViewModel(application) {
         repository = WaterRepository(db)
         viewModelScope.launch {
             repository.ensureInitialDataSeeded()
+            // Re-sync alarms with the active reminder set on every app open, since alarms
+            // set with AlarmManager don't persist across reboots and edits made while the
+            // app was closed (or before exact-alarm permission was granted) need to be honored.
+            val active = repository.getAllRemindersOnce().filter { it.isActive }
+            ReminderScheduler.rescheduleAll(application, active)
         }
     }
 
@@ -58,6 +64,28 @@ class WaterViewModel(application: Application) : AndroidViewModel(application) {
     fun toggleReminder(reminderId: Long, isActive: Boolean) {
         viewModelScope.launch {
             repository.updateReminderStatus(reminderId, isActive)
+            if (isActive) {
+                val reminder = repository.getReminderById(reminderId)
+                if (reminder != null) ReminderScheduler.scheduleReminder(getApplication(), reminder)
+            } else {
+                ReminderScheduler.cancelReminder(getApplication(), reminderId)
+            }
+        }
+    }
+
+    /**
+     * Persists a new or edited reminder (unlike [toggleReminder], which only flips
+     * isActive) and re-schedules its alarm to match the saved text/time/frequency.
+     */
+    fun saveReminder(reminder: Reminder) {
+        viewModelScope.launch {
+            val savedId = repository.insertOrUpdateReminder(reminder)
+            val saved = reminder.copy(id = savedId)
+            if (saved.isActive) {
+                ReminderScheduler.scheduleReminder(getApplication(), saved)
+            } else {
+                ReminderScheduler.cancelReminder(getApplication(), saved.id)
+            }
         }
     }
 
@@ -85,6 +113,9 @@ class WaterViewModel(application: Application) : AndroidViewModel(application) {
                 customMessage = customMessage,
                 isPremiumActivate = isPremiumActivate
             )
+            repository.getRemindersForFrameworkOnce(id)
+                .filter { it.isActive }
+                .forEach { ReminderScheduler.scheduleReminder(getApplication(), it) }
             onComplete(id)
         }
     }
@@ -128,7 +159,11 @@ class WaterViewModel(application: Application) : AndroidViewModel(application) {
 
     fun wipeAllData() {
         viewModelScope.launch {
+            uiState.value.reminders.forEach { ReminderScheduler.cancelReminder(getApplication(), it.id) }
             repository.wipeAllUserDataAndReset()
+            repository.getAllRemindersOnce()
+                .filter { it.isActive }
+                .forEach { ReminderScheduler.scheduleReminder(getApplication(), it) }
         }
     }
 }

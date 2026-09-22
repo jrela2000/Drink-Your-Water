@@ -17,6 +17,12 @@ interface ReminderDao {
     @Query("SELECT * FROM reminders WHERE frameworkId = :frameworkId ORDER BY id ASC")
     fun getRemindersForFramework(frameworkId: Long): Flow<List<Reminder>>
 
+    @Query("SELECT * FROM reminders WHERE frameworkId = :frameworkId ORDER BY id ASC")
+    suspend fun getRemindersForFrameworkDirect(frameworkId: Long): List<Reminder>
+
+    @Query("SELECT * FROM reminders ORDER BY id ASC")
+    suspend fun getAllRemindersDirect(): List<Reminder>
+
     @Query("SELECT * FROM reminders WHERE id = :id")
     suspend fun getReminderById(id: Long): Reminder?
 
