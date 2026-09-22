@@ -190,7 +190,6 @@ fun MainAppNavGraph(
                             theme = theme,
                             motivationalContent = motivationalContent,
                             customMessage = customMessage,
-                            isPremiumActivate = true,
                             onComplete = {
                                 navController.navigate("home") {
                                     popUpTo("builder") { inclusive = true }

@@ -22,9 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -46,7 +44,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -82,7 +79,6 @@ fun FrameworkBuilderFlow(
     var overlayTheme by remember { mutableStateOf("midnight-water") }
     var motivationalContent by remember { mutableStateOf("affirmations") }
     var customMessage by remember { mutableStateOf("Take a deep breath and complete your habit.") }
-    var selectedTier by remember { mutableStateOf("builder") }
 
     Scaffold(
         topBar = {
@@ -93,8 +89,7 @@ fun FrameworkBuilderFlow(
                             1 -> "Framework Name"
                             2 -> "Habit Reminders"
                             3 -> "Overlay Preview"
-                            4 -> "Review Framework"
-                            else -> "Activate Subscription"
+                            else -> "Review Framework"
                         },
                         fontWeight = FontWeight.Bold
                     )
@@ -121,7 +116,7 @@ fun FrameworkBuilderFlow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.padding(bottom = 16.dp)
             ) {
-                (1..5).forEach { i ->
+                (1..4).forEach { i ->
                     Box(
                         modifier = Modifier
                             .height(6.dp)
@@ -176,12 +171,7 @@ fun FrameworkBuilderFlow(
                         theme = overlayTheme,
                         motivationalContent = motivationalContent,
                         customMessage = customMessage,
-                        onNext = { step = 5 }
-                    )
-                    5 -> Step5Activate(
-                        selectedTier = selectedTier,
-                        onSelectTier = { selectedTier = it },
-                        onActivate = {
+                        onNext = {
                             onCompleteBuilderActivate(
                                 frameworkName,
                                 remindersList.toList(),
@@ -458,95 +448,9 @@ private fun Step4Review(
         RippleButton(
             onClick = onNext,
             modifier = Modifier.fillMaxWidth(),
-            testTag = "builder_step4_next"
+            testTag = "activate_framework_button"
         ) {
-            Text("Proceed to Activation & Paywall", fontWeight = FontWeight.Bold)
-        }
-    }
-}
-
-@Composable
-private fun Step5Activate(
-    selectedTier: String,
-    onSelectTier: (String) -> Unit,
-    onActivate: () -> Unit
-) {
-    val tiers = listOf(
-        "starter" to ("Starter Habit Tier" to "$2.99 / month • 1 Custom Habit Lock Overlay"),
-        "builder" to ("Builder Unlimited Tier" to "$4.99 / month • Unlimited Custom Lock Overlays & Sound Chimes"),
-        "fullstack" to ("Full-Stack Lifetime Tier" to "$9.99 / year • All Features, Priority Sync & Lifetime Access")
-    )
-
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.SpaceBetween,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(
-                modifier = Modifier
-                    .size(60.dp)
-                    .clip(CircleShape)
-                    .background(FreshBlue),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Default.Star, contentDescription = null, tint = Color.White, modifier = Modifier.size(32.dp))
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = "Activate Custom Framework",
-                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            Text(
-                text = "Choose your subscription plan to unlock your custom lock screen overlay.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
-            )
-
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                tiers.forEach { (key, pair) ->
-                    val (title, price) = pair
-                    val isSelected = key == selectedTier
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(16.dp))
-                            .clickable { onSelectTier(key) }
-                            .testTag("tier_card_$key"),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (isSelected) FreshBlue.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(text = title, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
-                                Text(text = price, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                            if (isSelected) {
-                                Icon(Icons.Default.Check, contentDescription = null, tint = FreshBlue)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        RippleButton(
-            onClick = onActivate,
-            modifier = Modifier.fillMaxWidth(),
-            testTag = "mock_activate_framework_button"
-        ) {
-            Text("Activate Framework (Mock Activation)", fontWeight = FontWeight.Bold)
+            Text("Activate My Framework", fontWeight = FontWeight.Bold)
         }
     }
 }

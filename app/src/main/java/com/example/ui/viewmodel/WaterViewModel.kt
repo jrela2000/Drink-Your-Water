@@ -101,7 +101,6 @@ class WaterViewModel(application: Application) : AndroidViewModel(application) {
         theme: String,
         motivationalContent: String,
         customMessage: String,
-        isPremiumActivate: Boolean,
         onComplete: (Long) -> Unit
     ) {
         viewModelScope.launch {
@@ -110,8 +109,7 @@ class WaterViewModel(application: Application) : AndroidViewModel(application) {
                 remindersList = reminders,
                 overlayTheme = theme,
                 motivationalContent = motivationalContent,
-                customMessage = customMessage,
-                isPremiumActivate = isPremiumActivate
+                customMessage = customMessage
             )
             repository.getRemindersForFrameworkOnce(id)
                 .filter { it.isActive }

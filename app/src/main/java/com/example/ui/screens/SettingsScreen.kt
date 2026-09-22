@@ -166,12 +166,12 @@ fun SettingsScreen(
 
                             Column {
                                 Text(
-                                    text = if (userProfile.isPremium) "Premium Habit Access Active" else "Free Water Hydration Active",
+                                    text = "All Habit Reminders Active",
                                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = if (userProfile.isPremium) "Unlimited Custom Habit Lock Overlays" else "Core Water Hydration free forever",
+                                    text = "Water hydration plus any custom habits you build — free for now",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )

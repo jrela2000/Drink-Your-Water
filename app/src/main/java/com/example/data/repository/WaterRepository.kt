@@ -137,20 +137,23 @@ class WaterRepository(private val db: AppDatabase) {
         }
     }
 
+    /**
+     * Custom frameworks activate immediately and for free in this build — there is no
+     * real payment integration, so nothing here should claim (or actually grant) a paid tier.
+     */
     suspend fun createFrameworkWithReminders(
         frameworkName: String,
         remindersList: List<Pair<String, String>>, // time, text
         overlayTheme: String,
         motivationalContent: String,
-        customMessage: String,
-        isPremiumActivate: Boolean = true
+        customMessage: String
     ): Long {
         val framework = Framework(
             name = frameworkName,
             overlayTheme = overlayTheme,
             motivationalContent = motivationalContent,
             customMessage = customMessage,
-            status = if (isPremiumActivate) "active" else "draft",
+            status = "active",
             isWater = false
         )
         val frameworkId = db.frameworkDao().insertFramework(framework)
@@ -160,15 +163,10 @@ class WaterRepository(private val db: AppDatabase) {
                 text = text,
                 scheduledTime = time,
                 frameworkId = frameworkId,
-                isActive = isPremiumActivate
+                isActive = true
             )
         }
         db.reminderDao().insertReminders(remindersToInsert)
-
-        if (isPremiumActivate) {
-            val profile = db.userProfileDao().getUserProfileDirect() ?: UserProfile()
-            db.userProfileDao().insertOrUpdateProfile(profile.copy(isPremium = true))
-        }
 
         return frameworkId
     }

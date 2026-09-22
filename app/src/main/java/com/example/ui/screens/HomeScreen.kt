@@ -67,6 +67,7 @@ fun HomeScreen(
 
     val activeFrameworks = frameworks.filter { it.status == "active" }
     val draftFrameworks = frameworks.filter { it.status == "draft" }
+    val hasCustomFramework = frameworks.any { !it.isWater }
 
     Scaffold(
         topBar = {
@@ -228,8 +229,8 @@ fun HomeScreen(
                 )
             }
 
-            // Drafts / Locked Custom Frameworks Section
-            if (draftFrameworks.isNotEmpty() || !userProfile.isPremium) {
+            // Drafts / suggested custom frameworks the user hasn't built yet
+            if (draftFrameworks.isNotEmpty() || !hasCustomFramework) {
                 item {
                     Text(
                         text = "Explore Custom Habit Lock Overlays",
