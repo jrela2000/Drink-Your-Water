@@ -41,7 +41,7 @@ abstract class AppDatabase : RoomDatabase() {
                     // missing migration gets written, instead of silently wiping every user's
                     // reminders/streaks/history in production. Downgrades (installing an older
                     // debug build over a newer one) are dev-only and safe to reset.
-                    .fallbackToDestructiveMigrationOnDowngrade()
+                    .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
                     .build()
                 INSTANCE = instance
                 instance
