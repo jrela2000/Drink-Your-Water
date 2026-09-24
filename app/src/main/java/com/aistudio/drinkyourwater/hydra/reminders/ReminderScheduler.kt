@@ -81,7 +81,7 @@ object ReminderScheduler {
             ?: (8 to 0)
         val (endHour, endMinute) = parse24HourTime(reminder.endTime) ?: (22 to 0)
 
-        val base = Calendar.getInstance()
+        val base = Calendar.getInstance().apply { timeInMillis = fromMillis }
         for (dayOffset in 0..7) {
             val day = (base.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, dayOffset) }
             // Calendar.DAY_OF_WEEK is SUNDAY=1..SATURDAY=7; convert to MONDAY=0..SUNDAY=6.

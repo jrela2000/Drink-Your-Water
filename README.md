@@ -40,7 +40,7 @@ You can sample the web app directly in your browser:
 - **Architecture**: MVVM (Model-View-ViewModel) with Kotlin Coroutines & `StateFlow`
 - **Navigation**: Jetpack Navigation Compose
 - **Local Persistence**: Android Room Database with KSP (Kotlin Symbol Processing)
-- **Testing**: Robolectric JVM unit tests & Roborazzi screenshot verification
+- **Testing**: Robolectric-backed JVM unit tests, plus instrumented tests on-device (Roborazzi is wired up for screenshot testing when a suite is added)
 
 ---
 
@@ -48,22 +48,20 @@ You can sample the web app directly in your browser:
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/your-username/drink-your-water.git
-   cd drink-your-water
+   git clone https://github.com/jrela2000/Drink-Your-Water.git
+   cd Drink-Your-Water
    ```
 
 2. **Build debug APK**:
    ```bash
-   gradle assembleDebug
+   ./gradlew assembleDebug
    ```
 
 3. **Run tests**:
    ```bash
-   gradle :app:testDebugUnitTest
+   ./gradlew :app:testDebugUnitTest
    ```
 
 ---
 
-## 📄 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
+All rights reserved. No open-source license is granted at this time.
