@@ -137,6 +137,14 @@ class WaterRepository(private val db: AppDatabase) {
         }
     }
 
+    /** Persists a snooze so the UI's 2-snooze cap is real, and returns the updated reminder. */
+    suspend fun incrementSnoozeCount(reminderId: Long): Reminder? {
+        val reminder = db.reminderDao().getReminderById(reminderId) ?: return null
+        val updated = reminder.copy(snoozeCount = reminder.snoozeCount + 1)
+        db.reminderDao().updateReminder(updated)
+        return updated
+    }
+
     /**
      * Custom frameworks activate immediately and for free in this build — there is no
      * real payment integration, so nothing here should claim (or actually grant) a paid tier.
@@ -194,6 +202,13 @@ class WaterRepository(private val db: AppDatabase) {
                 totalCompletions = newTotal
             )
         )
+
+        // Confirming resets the snooze count, so the next time this reminder fires it
+        // again has its full 2-snooze allowance rather than staying maxed out forever.
+        val reminder = db.reminderDao().getReminderById(reminderId)
+        if (reminder != null) {
+            db.reminderDao().updateReminder(reminder.copy(snoozeCount = 0))
+        }
     }
 
     suspend fun updateProfile(profile: UserProfile) {

@@ -19,6 +19,8 @@ import java.util.Locale
  */
 object ReminderScheduler {
 
+    private const val SNOOZE_MINUTES = 10
+
     fun canScheduleExactAlarms(context: Context): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return true
         val alarmManager = context.getSystemService(AlarmManager::class.java) ?: return false
@@ -26,13 +28,21 @@ object ReminderScheduler {
     }
 
     fun scheduleReminder(context: Context, reminder: Reminder) {
-        val alarmManager = context.getSystemService(AlarmManager::class.java) ?: return
         cancelReminder(context, reminder.id)
-
         if (!reminder.isActive) return
         val triggerAt = nextTriggerAtMillis(reminder) ?: return
-        val pendingIntent = pendingIntentFor(context, reminder.id)
+        setAlarm(context, reminder.id, triggerAt)
+    }
 
+    /** Re-fires this same reminder in [SNOOZE_MINUTES], replacing whatever was scheduled next. */
+    fun scheduleSnooze(context: Context, reminder: Reminder) {
+        val triggerAt = System.currentTimeMillis() + SNOOZE_MINUTES * 60_000L
+        setAlarm(context, reminder.id, triggerAt)
+    }
+
+    private fun setAlarm(context: Context, reminderId: Long, triggerAt: Long) {
+        val alarmManager = context.getSystemService(AlarmManager::class.java) ?: return
+        val pendingIntent = pendingIntentFor(context, reminderId)
         try {
             if (canScheduleExactAlarms(context)) {
                 alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)

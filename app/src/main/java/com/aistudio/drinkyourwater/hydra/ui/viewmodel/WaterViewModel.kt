@@ -89,6 +89,16 @@ class WaterViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /** Persists the snooze and reschedules this reminder to re-fire in ~10 minutes. */
+    fun snoozeReminder(reminderId: Long) {
+        viewModelScope.launch {
+            val updated = repository.incrementSnoozeCount(reminderId)
+            if (updated != null) {
+                ReminderScheduler.scheduleSnooze(getApplication(), updated)
+            }
+        }
+    }
+
     fun logCompletion(reminderId: Long, reminderText: String, snoozeCount: Int) {
         viewModelScope.launch {
             repository.logCompletionAndUnlock(reminderId, reminderText, snoozeCount)

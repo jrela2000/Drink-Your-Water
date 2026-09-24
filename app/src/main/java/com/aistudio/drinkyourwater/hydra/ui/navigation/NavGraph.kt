@@ -144,10 +144,8 @@ fun MainAppNavGraph(
                         viewModel.logCompletion(remId, text, snoozeCount)
                         navController.popBackStack()
                     },
-                    onSnooze = {
-                        navController.popBackStack()
-                    },
-                    onDismiss = {
+                    onSnooze = { remId ->
+                        viewModel.snoozeReminder(remId)
                         navController.popBackStack()
                     }
                 )
