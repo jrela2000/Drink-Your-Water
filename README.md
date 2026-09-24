@@ -33,6 +33,21 @@ You can sample the web app directly in your browser:
 
 ---
 
+## 🔒 How the Lock Screen Works
+
+**How does the lock screen work?**
+When a reminder fires, Drink Your Water shows a full-screen overlay that stays in front until you confirm the habit or use one of your two snoozes. The Home and Recent Apps buttons are disabled for the duration using Android's built-in **screen pinning** feature — the same mechanism Android itself offers for focus and kiosk-style apps.
+
+**What permissions does the app need?**
+Drink Your Water needs **Screen pinning** turned on in your phone's Settings (under Security, or search "pin" in Settings search — the exact menu varies by phone). We don't require any special or sensitive permission for this — screen pinning is a standard Android feature you control and can turn off at any time. We don't use Accessibility Services or "draw over other apps" permissions, and we don't block or monitor your use of other apps.
+
+**Can I still get out if I really need to (e.g. a phone call)?**
+Yes. Android's screen pinning always keeps one exit gesture available system-wide (hold Back + Recents together, or swipe-up-and-hold on gesture navigation) so you can never be fully locked out of your phone — that's an OS-level guarantee, not something any app can remove. In everyday use, though, there's no visible "X" or back-button shortcut out of the reminder screen; only confirming the habit or using a snooze will dismiss it normally.
+
+See [docs/lock-screen-mechanism.md](docs/lock-screen-mechanism.md) for the full technical rationale, including why this doesn't (and can't) work the same way iOS app blockers like Pray Focus do.
+
+---
+
 ## 🛠️ Architecture & Tech Stack
 
 - **Language**: Kotlin 100%
