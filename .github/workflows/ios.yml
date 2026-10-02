@@ -10,10 +10,18 @@ on:
       - "ios/**"
       - ".github/workflows/ios.yml"
   workflow_dispatch:
+    inputs:
+      commit_screenshots:
+        description: "Commit downsized screenshots to ios/screenshots on this branch"
+        type: boolean
+        default: false
 
 concurrency:
   group: ios-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: write
 
 jobs:
   build-test-screenshot:
@@ -99,6 +107,20 @@ jobs:
             done
           done
           ls -la screenshots
+
+      - name: Commit screenshots
+        if: github.event_name == 'workflow_dispatch' && inputs.commit_screenshots
+        run: |
+          mkdir -p ../ios-screenshots-preview
+          for f in screenshots/*.png; do
+            sips -s format jpeg -s formatOptions 75 -Z 1000 "$f" --out "../ios-screenshots-preview/$(basename "${f%.png}").jpg" >/dev/null
+          done
+          rm -rf screenshots-preview && mv ../ios-screenshots-preview screenshots-preview
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add screenshots-preview
+          git commit -m "Update iOS simulator screenshot previews [skip ci]" || echo "No changes"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
 
       - name: Upload screenshots
         if: always()
