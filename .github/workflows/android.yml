@@ -1,0 +1,58 @@
+name: Android
+
+on:
+  push:
+    paths-ignore:
+      - "ios/**"
+      - ".github/workflows/ios.yml"
+      - "**.md"
+  pull_request:
+    paths-ignore:
+      - "ios/**"
+      - ".github/workflows/ios.yml"
+      - "**.md"
+  workflow_dispatch:
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # The debug signing config points at a debug.keystore that's git-ignored.
+      - name: Create debug keystore
+        run: |
+          keytool -genkeypair -v -keystore debug.keystore -storepass android \
+            -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 \
+            -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+
+      - name: Unit tests
+        run: ./gradlew :app:testDebugUnitTest --stacktrace
+
+      - name: Build debug APK
+        run: ./gradlew :app:assembleDebug
+
+      - name: Room schema export is committed
+        run: |
+          git status --porcelain app/schemas
+          test -z "$(git status --porcelain app/schemas)"
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-test-reports
+          path: app/build/reports/tests/
+          if-no-files-found: ignore
