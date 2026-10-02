@@ -52,7 +52,7 @@ class WaterRepository(private val db: AppDatabase) {
                 Reminder(
                     id = 1,
                     text = "Morning Hydration (First Glass)",
-                    frequency = "1hr",
+                    frequency = "daily",
                     startTime = "08:00",
                     endTime = "22:00",
                     isActive = true,
@@ -62,7 +62,7 @@ class WaterRepository(private val db: AppDatabase) {
                 Reminder(
                     id = 2,
                     text = "Post-Breakfast Water Refresh",
-                    frequency = "1hr",
+                    frequency = "daily",
                     startTime = "08:00",
                     endTime = "22:00",
                     isActive = true,
@@ -72,7 +72,7 @@ class WaterRepository(private val db: AppDatabase) {
                 Reminder(
                     id = 3,
                     text = "Mid-Day Hydration Boost",
-                    frequency = "1hr",
+                    frequency = "daily",
                     startTime = "08:00",
                     endTime = "22:00",
                     isActive = true,
@@ -82,7 +82,7 @@ class WaterRepository(private val db: AppDatabase) {
                 Reminder(
                     id = 4,
                     text = "Afternoon Energy Hydration",
-                    frequency = "1hr",
+                    frequency = "daily",
                     startTime = "08:00",
                     endTime = "22:00",
                     isActive = true,
@@ -92,7 +92,7 @@ class WaterRepository(private val db: AppDatabase) {
                 Reminder(
                     id = 5,
                     text = "Pre-Dinner Glass of Water",
-                    frequency = "1hr",
+                    frequency = "daily",
                     startTime = "08:00",
                     endTime = "22:00",
                     isActive = true,
@@ -102,7 +102,7 @@ class WaterRepository(private val db: AppDatabase) {
                 Reminder(
                     id = 6,
                     text = "Evening Wind-Down Hydration",
-                    frequency = "1hr",
+                    frequency = "daily",
                     startTime = "08:00",
                     endTime = "22:00",
                     isActive = true,
@@ -135,6 +135,19 @@ class WaterRepository(private val db: AppDatabase) {
         if (reminder != null) {
             db.reminderDao().updateReminder(reminder.copy(isActive = isActive))
         }
+    }
+
+    /**
+     * Called when a reminder's regular (non-snooze) alarm fires: that's a new firing, so it
+     * gets a fresh 2-snooze allowance. Without this, a reminder snoozed twice and then
+     * ignored would show "No snoozes left" on every later firing.
+     */
+    suspend fun startNewFiring(reminderId: Long): Reminder? {
+        val reminder = db.reminderDao().getReminderById(reminderId) ?: return null
+        if (reminder.snoozeCount == 0) return reminder
+        val reset = reminder.copy(snoozeCount = 0)
+        db.reminderDao().updateReminder(reset)
+        return reset
     }
 
     /** Persists a snooze so the UI's 2-snooze cap is real, and returns the updated reminder. */

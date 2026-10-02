@@ -37,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aistudio.drinkyourwater.hydra.data.model.Reminder
+import com.aistudio.drinkyourwater.hydra.reminders.ReminderScheduler
 import com.aistudio.drinkyourwater.hydra.ui.theme.ConfirmGreen
 import com.aistudio.drinkyourwater.hydra.ui.theme.FreshBlue
 import com.aistudio.drinkyourwater.hydra.ui.theme.GlacierBlue
@@ -113,7 +114,7 @@ fun ReminderCard(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "${reminder.scheduledTime} • Interval: ${reminder.frequency}",
+                                text = "${reminder.scheduledTime} • ${ReminderScheduler.frequencyLabel(reminder.frequency)}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

@@ -20,6 +20,23 @@ import java.util.Locale
 object ReminderScheduler {
 
     private const val SNOOZE_MINUTES = 10
+    const val EXTRA_IS_SNOOZE = "extra_is_snooze"
+
+    /** Fires once a day at the reminder's time. The default for every reminder. */
+    const val FREQUENCY_DAILY = "daily"
+
+    /** Frequencies offered in the reminder editor, as (stored value, label). */
+    val frequencyOptions = listOf(
+        FREQUENCY_DAILY to "Once a day",
+        "30min" to "Every 30 min",
+        "1hr" to "Every hour",
+        "2hr" to "Every 2 hours",
+        "3hr" to "Every 3 hours"
+    )
+
+    fun frequencyLabel(frequency: String): String =
+        frequencyOptions.firstOrNull { it.first == frequency.trim().lowercase(Locale.US) }?.second
+            ?: "Every $frequency"
 
     fun canScheduleExactAlarms(context: Context): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return true
@@ -31,18 +48,18 @@ object ReminderScheduler {
         cancelReminder(context, reminder.id)
         if (!reminder.isActive) return
         val triggerAt = nextTriggerAtMillis(reminder) ?: return
-        setAlarm(context, reminder.id, triggerAt)
+        setAlarm(context, reminder.id, triggerAt, isSnooze = false)
     }
 
     /** Re-fires this same reminder in [SNOOZE_MINUTES], replacing whatever was scheduled next. */
     fun scheduleSnooze(context: Context, reminder: Reminder) {
         val triggerAt = System.currentTimeMillis() + SNOOZE_MINUTES * 60_000L
-        setAlarm(context, reminder.id, triggerAt)
+        setAlarm(context, reminder.id, triggerAt, isSnooze = true)
     }
 
-    private fun setAlarm(context: Context, reminderId: Long, triggerAt: Long) {
+    private fun setAlarm(context: Context, reminderId: Long, triggerAt: Long, isSnooze: Boolean) {
         val alarmManager = context.getSystemService(AlarmManager::class.java) ?: return
-        val pendingIntent = pendingIntentFor(context, reminderId)
+        val pendingIntent = pendingIntentFor(context, reminderId, isSnooze)
         try {
             if (canScheduleExactAlarms(context)) {
                 alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
@@ -63,9 +80,12 @@ object ReminderScheduler {
         reminders.forEach { scheduleReminder(context, it) }
     }
 
-    private fun pendingIntentFor(context: Context, reminderId: Long): PendingIntent {
+    // Extras don't take part in PendingIntent matching, so cancelReminder() finds the alarm
+    // whichever isSnooze value it was set with; FLAG_UPDATE_CURRENT swaps in the new extras.
+    private fun pendingIntentFor(context: Context, reminderId: Long, isSnooze: Boolean = false): PendingIntent {
         val intent = Intent(context, ReminderAlarmReceiver::class.java).apply {
             putExtra(NotificationHelper.EXTRA_REMINDER_ID, reminderId)
+            putExtra(EXTRA_IS_SNOOZE, isSnooze)
         }
         return PendingIntent.getBroadcast(
             context,
@@ -77,11 +97,13 @@ object ReminderScheduler {
 
     /**
      * Next timestamp after [fromMillis] at which [reminder] should fire, honoring its
-     * scheduled time-of-day (or startTime as a fallback anchor), its repeat interval, its
-     * active window (startTime..endTime) and its active weekdays. Returns null if the
-     * reminder has no active weekday or a malformed window.
+     * scheduled time-of-day (or startTime as a fallback anchor), its active weekdays and,
+     * for interval reminders, its repeat interval up to endTime. A [FREQUENCY_DAILY]
+     * reminder fires only at its time. Returns null if the reminder has no active weekday
+     * or a malformed window.
      */
     fun nextTriggerAtMillis(reminder: Reminder, fromMillis: Long = System.currentTimeMillis()): Long? {
+        val isDaily = reminder.frequency.trim().equals(FREQUENCY_DAILY, ignoreCase = true)
         val intervalMinutes = parseIntervalMinutes(reminder).coerceAtLeast(1)
         val activeDays = parseActiveDays(reminder.activeDays)
         if (activeDays.none { it }) return null
@@ -103,6 +125,10 @@ object ReminderScheduler {
                 set(Calendar.MINUTE, anchorMinute)
                 set(Calendar.SECOND, 0)
                 set(Calendar.MILLISECOND, 0)
+            }
+            if (isDaily) {
+                if (dayStart.timeInMillis > fromMillis) return dayStart.timeInMillis
+                continue
             }
             val dayEnd = (day.clone() as Calendar).apply {
                 set(Calendar.HOUR_OF_DAY, endHour)
@@ -147,7 +173,8 @@ object ReminderScheduler {
         return if (parts.size == 7) parts.toBooleanArray() else BooleanArray(7) { true }
     }
 
-    private fun parseClockTime(value: String): Pair<Int, Int>? {
+    /** Parses "h:mm AM/PM" (e.g. "9:30 PM", "09:30 pm"); null if it isn't a valid time. */
+    fun parseClockTime(value: String): Pair<Int, Int>? {
         return try {
             val format = SimpleDateFormat("h:mm a", Locale.US)
             format.isLenient = false

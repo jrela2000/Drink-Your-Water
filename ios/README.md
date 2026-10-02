@@ -83,20 +83,15 @@ stopping.
 All data stays on the device in a single JSON file in Application Support. Nothing goes to a
 server, no accounts, no analytics, no tracking.
 
-## Differences from the Android build (deliberate)
+## Differences from the Android build
 
-- **Six default reminders fire once a day each.** On Android each seeded reminder also
-  carries a `1hr` interval, so the scheduler repeats every one of them hourly until 10 PM
-  (about 50 alerts a day). iOS adds a **Once a day** frequency and uses it for the defaults.
 - **Stats are real.** Android seeds a 3-day streak, 7-day best and 18 completions on first
   launch, and the weekly chart is hard-coded. Streaks, totals and the weekly chart are computed
   here from actual check-ins. A day counts toward the streak when at least one check-in was
   confirmed.
-- **Chimes actually play.** The Android sound setting is saved but never used. iOS bundles
-  four tones and uses the selected one for notifications, with a preview in Settings.
-- **Snoozes are per firing.** Android only resets the snooze count on Confirm, so a reminder
-  you snoozed twice and then ignored stays at "no snoozes left" forever. Here each new firing
-  starts with two snoozes.
+
+Both apps now share the reminder behavior: default reminders fire once a day, each new firing
+gets two snoozes, and the chosen chime plays.
 
 ## Before submitting to the App Store
 
