@@ -59,7 +59,13 @@ See [docs/lock-screen-mechanism.md](docs/lock-screen-mechanism.md) for the full 
 
 ---
 
-## 🚀 Building & Running
+## 🍎 iPhone Version
+
+A native SwiftUI iPhone app lives in [`ios/`](ios/). See [ios/README.md](ios/README.md) for how to open it in Xcode, how the check-in "lock" works on iOS, and the App Store checklist.
+
+---
+
+## 🚀 Building & Running (Android)
 
 1. **Clone the repository**:
    ```bash

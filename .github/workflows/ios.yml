@@ -1,0 +1,139 @@
+name: iOS
+
+on:
+  push:
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios.yml"
+  pull_request:
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios.yml"
+  workflow_dispatch:
+    inputs:
+      commit_screenshots:
+        description: "Commit downsized screenshots to ios/screenshots on this branch"
+        type: boolean
+        default: false
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-test-screenshot:
+    runs-on: macos-15
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: ios
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          xcrun simctl list runtimes
+
+      - name: Pick an iPhone simulator
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c "
+          import json, sys
+          devices = json.load(sys.stdin)['devices']
+          runtimes = sorted((r for r in devices if 'iOS' in r), reverse=True)
+          for r in runtimes:
+              for d in devices[r]:
+                  if d['name'].startswith('iPhone') and 'Pro Max' in d['name']:
+                      print(d['udid']); sys.exit()
+          for r in runtimes:
+              for d in devices[r]:
+                  if d['name'].startswith('iPhone'):
+                      print(d['udid']); sys.exit()
+          ")
+          echo "Using simulator $UDID"
+          echo "SIM_UDID=$UDID" >> "$GITHUB_ENV"
+
+      - name: Build and run unit tests
+        run: |
+          xcodebuild test \
+            -project DrinkYourWater.xcodeproj \
+            -scheme DrinkYourWater \
+            -destination "id=$SIM_UDID" \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            > xcodebuild-test.log 2>&1 && status=0 || status=$?
+          grep -E "error:|warning: .*/ios/DrinkYourWater|Test Case .*(passed|failed)|Executed|\*\* TEST" xcodebuild-test.log || true
+          tail -n 25 xcodebuild-test.log
+          exit $status
+
+      - name: Build for device (Release, unsigned)
+        run: |
+          xcodebuild build \
+            -project DrinkYourWater.xcodeproj \
+            -scheme DrinkYourWater \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -derivedDataPath build-device \
+            CODE_SIGNING_ALLOWED=NO \
+            > xcodebuild-device.log 2>&1 && status=0 || status=$?
+          grep -E "error:|warning: .*/ios/DrinkYourWater|\*\* BUILD" xcodebuild-device.log || true
+          exit $status
+
+      - name: Capture screenshots
+        run: |
+          APP=build/Build/Products/Debug-iphonesimulator/DrinkYourWater.app
+          BUNDLE=com.aistudio.drinkyourwater.hydra
+          mkdir -p screenshots
+          xcrun simctl boot "$SIM_UDID" || true
+          xcrun simctl bootstatus "$SIM_UDID" -b
+          xcrun simctl status_bar "$SIM_UDID" override --time "9:41" --batteryState charged --batteryLevel 100 --cellularBars 4 --wifiBars 3 || true
+          xcrun simctl install "$SIM_UDID" "$APP"
+          for appearance in light dark; do
+            xcrun simctl ui "$SIM_UDID" appearance $appearance
+            for screen in onboarding home progress settings checkin; do
+              xcrun simctl terminate "$SIM_UDID" $BUNDLE 2>/dev/null || true
+              xcrun simctl launch "$SIM_UDID" $BUNDLE -screenshot $screen
+              sleep 4
+              xcrun simctl io "$SIM_UDID" screenshot "screenshots/$appearance-$screen.png"
+            done
+          done
+          ls -la screenshots
+
+      - name: Commit screenshots
+        if: github.event_name == 'workflow_dispatch' && inputs.commit_screenshots
+        run: |
+          mkdir -p ../ios-screenshots-preview
+          for f in screenshots/*.png; do
+            sips -s format jpeg -s formatOptions 75 -Z 1000 "$f" --out "../ios-screenshots-preview/$(basename "${f%.png}").jpg" >/dev/null
+          done
+          rm -rf screenshots-preview && mv ../ios-screenshots-preview screenshots-preview
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add screenshots-preview
+          git commit -m "Update iOS simulator screenshot previews [skip ci]" || echo "No changes"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-screenshots
+          path: ios/screenshots/
+          if-no-files-found: ignore
+
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-logs
+          path: ios/*.log
+          if-no-files-found: ignore
