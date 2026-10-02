@@ -102,6 +102,8 @@ struct SettingsView: View {
                     LabeledContent("Version", value: Bundle.main.appVersion)
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(Palette.background)
             .navigationTitle("Settings")
             .sheet(isPresented: $showSounds) {
                 SoundPickerSheet(selected: profile.notificationSound) { store.setNotificationSound($0) }
