@@ -36,7 +36,7 @@ You can sample the web app directly in your browser:
 ## 🔒 How the Lock Screen Works
 
 **How does the lock screen work?**
-When a reminder fires, Drink Your Water shows a full-screen overlay that stays in front until you confirm the habit or use one of your two snoozes. The Home and Recent Apps buttons are disabled for the duration using Android's built-in **screen pinning** feature — the same mechanism Android itself offers for focus and kiosk-style apps.
+When a reminder fires you get a notification; tapping it opens a full-screen overlay. If you ignore it, it re-alerts every 10 minutes, up to three more times, until you confirm or snooze. The overlay stays in front until you confirm the habit or use one of your two snoozes. The Home and Recent Apps buttons are disabled for the duration using Android's built-in **screen pinning** feature — the same mechanism Android itself offers for focus and kiosk-style apps.
 
 **What permissions does the app need?**
 Drink Your Water needs **Screen pinning** turned on in your phone's Settings (under Security, or search "pin" in Settings search — the exact menu varies by phone). We don't require any special or sensitive permission for this — screen pinning is a standard Android feature you control and can turn off at any time. We don't use Accessibility Services or "draw over other apps" permissions, and we don't block or monitor your use of other apps.

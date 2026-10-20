@@ -133,4 +133,22 @@ class ReminderSchedulerTest {
         assertNull(ReminderScheduler.parseClockTime("25:00 PM"))
         assertNull(ReminderScheduler.parseClockTime("noon"))
     }
+
+    @Test
+    fun `escalation re-alerts every 10 minutes, three times, then stops`() {
+        val now = calendarAt(9, 0).timeInMillis
+        for (level in 1..ReminderScheduler.MAX_ESCALATIONS) {
+            assertEquals(calendarAt(9, 10).timeInMillis, ReminderScheduler.nextEscalationAtMillis(level, now))
+        }
+        assertNull(ReminderScheduler.nextEscalationAtMillis(ReminderScheduler.MAX_ESCALATIONS + 1, now))
+        assertNull(ReminderScheduler.nextEscalationAtMillis(0, now))
+    }
+
+    @Test
+    fun `alarms from older builds without an action are regular firings`() {
+        assertEquals(ReminderScheduler.AlarmKind.FIRE, ReminderScheduler.AlarmKind.fromAction(null))
+        ReminderScheduler.AlarmKind.values().forEach {
+            assertEquals(it, ReminderScheduler.AlarmKind.fromAction(it.action))
+        }
+    }
 }

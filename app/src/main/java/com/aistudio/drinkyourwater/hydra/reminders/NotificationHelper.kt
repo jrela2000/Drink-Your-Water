@@ -82,7 +82,17 @@ object NotificationHelper {
         }
     }
 
-    fun showReminderNotification(context: Context, reminder: Reminder, profile: UserProfile?) {
+    /**
+     * Posts (or replaces) the reminder's notification. [escalationLevel] > 0 marks a re-alert
+     * for a check-in that is still waiting; it uses the same notification id, so it replaces
+     * the earlier one and sounds again.
+     */
+    fun showReminderNotification(
+        context: Context,
+        reminder: Reminder,
+        profile: UserProfile?,
+        escalationLevel: Int = 0
+    ) {
         val channelId = ensureChannel(context, profile?.notificationSound)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
@@ -103,15 +113,20 @@ object NotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val body = when (profile?.motivationalStyle) {
-            "affirmations" -> "You show up for yourself. Every single time."
-            "scripture" -> "\"Let anyone who is thirsty come to me and drink.\" - John 7:37"
+        val body = when {
+            escalationLevel > 0 ->
+                "Still waiting on this check-in (reminder ${escalationLevel + 1} of " +
+                    "${ReminderScheduler.MAX_ESCALATIONS + 1}). Tap to confirm or snooze."
+            profile?.motivationalStyle == "affirmations" -> "You show up for yourself. Every single time."
+            profile?.motivationalStyle == "scripture" ->
+                "\"Let anyone who is thirsty come to me and drink.\" - John 7:37"
             else -> "Tap to confirm and unlock your screen."
         }
+        val title = if (escalationLevel > 0) "Still waiting: ${reminder.text}" else reminder.text
 
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle(reminder.text)
+            .setContentTitle(title)
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -122,5 +137,10 @@ object NotificationHelper {
             .build()
 
         NotificationManagerCompat.from(context).notify(reminder.id.toInt(), notification)
+    }
+
+    /** Removes the reminder's notification once its check-in is handled. */
+    fun dismissReminderNotification(context: Context, reminderId: Long) {
+        NotificationManagerCompat.from(context).cancel(reminderId.toInt())
     }
 }

@@ -62,6 +62,10 @@ screen pinning has no iPhone equivalent. So on iOS:
    **Confirm** or one of **two 10-minute snoozes** per reminder firing.
 3. The notification also has a **Snooze 10 min** button. After two snoozes the re-fired
    alert has no snooze button left.
+4. **Escalation:** a check-in that's neither confirmed nor snoozed re-alerts every 10 minutes,
+   up to three more times ("Still waiting: …"). Snoozing starts the count again from the
+   snooze; confirming stops it. Because iOS can't run code when a notification is ignored,
+   the re-alerts are scheduled up front and removed on confirm or snooze.
 
 ### The Pray Focus–style upgrade (phase 2)
 

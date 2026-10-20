@@ -150,6 +150,10 @@ class WaterRepository(private val db: AppDatabase) {
         return reset
     }
 
+    /** True when the reminder was confirmed at or after [since] (stops escalation). */
+    suspend fun isCompletedSince(reminderId: Long, since: Long): Boolean =
+        db.completionLogDao().countCompletionsSince(reminderId, since) > 0
+
     /** Persists a snooze so the UI's 2-snooze cap is real, and returns the updated reminder. */
     suspend fun incrementSnoozeCount(reminderId: Long): Reminder? {
         val reminder = db.reminderDao().getReminderById(reminderId) ?: return null

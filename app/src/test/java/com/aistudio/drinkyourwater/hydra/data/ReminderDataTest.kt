@@ -155,6 +155,24 @@ class ReminderDataTest {
     }
 
     @Test
+    fun `escalation stops once the check-in is confirmed`() {
+        val db = inMemoryDb()
+        val repository = WaterRepository(db)
+        runBlocking { repository.ensureInitialDataSeeded() }
+        val firedAt = System.currentTimeMillis() - 60_000L
+
+        assertTrue(!runBlocking { repository.isCompletedSince(1, firedAt) })
+
+        runBlocking { repository.logCompletionAndUnlock(1, "Morning", 0) }
+
+        assertTrue(runBlocking { repository.isCompletedSince(1, firedAt) })
+        // A different reminder's confirmation doesn't stop this one.
+        assertTrue(!runBlocking { repository.isCompletedSince(2, firedAt) })
+        // Confirmations from before this firing don't count.
+        assertTrue(!runBlocking { repository.isCompletedSince(1, System.currentTimeMillis() + 60_000L) })
+    }
+
+    @Test
     fun `reminder editor normalizes typed times and rejects bad ones`() {
         assertEquals("09:30 PM", normalizeClockTime("9:30 pm"))
         assertEquals("12:00 AM", normalizeClockTime("12:00 AM"))

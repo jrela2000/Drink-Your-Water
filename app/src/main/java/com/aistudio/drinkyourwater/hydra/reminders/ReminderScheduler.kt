@@ -20,7 +20,10 @@ import java.util.Locale
 object ReminderScheduler {
 
     private const val SNOOZE_MINUTES = 10
-    const val EXTRA_IS_SNOOZE = "extra_is_snooze"
+    const val ESCALATION_MINUTES = 10
+    const val MAX_ESCALATIONS = 3
+    const val EXTRA_ESCALATION_LEVEL = "extra_escalation_level"
+    const val EXTRA_FIRING_AT = "extra_firing_at"
 
     /** Fires once a day at the reminder's time. The default for every reminder. */
     const val FREQUENCY_DAILY = "daily"
@@ -45,21 +48,61 @@ object ReminderScheduler {
     }
 
     fun scheduleReminder(context: Context, reminder: Reminder) {
-        cancelReminder(context, reminder.id)
+        cancelAlarm(context, reminder.id, AlarmKind.FIRE)
         if (!reminder.isActive) return
         val triggerAt = nextTriggerAtMillis(reminder) ?: return
-        setAlarm(context, reminder.id, triggerAt, isSnooze = false)
+        setAlarm(context, reminder.id, triggerAt, AlarmKind.FIRE)
     }
 
-    /** Re-fires this same reminder in [SNOOZE_MINUTES], replacing whatever was scheduled next. */
+    /**
+     * Re-fires this reminder in [SNOOZE_MINUTES]. Snoozes use their own alarm, so the next
+     * regular firing stays scheduled and re-syncing alarms on app open can't drop a snooze.
+     */
     fun scheduleSnooze(context: Context, reminder: Reminder) {
+        cancelAlarm(context, reminder.id, AlarmKind.ESCALATE)
         val triggerAt = System.currentTimeMillis() + SNOOZE_MINUTES * 60_000L
-        setAlarm(context, reminder.id, triggerAt, isSnooze = true)
+        setAlarm(context, reminder.id, triggerAt, AlarmKind.SNOOZE)
     }
 
-    private fun setAlarm(context: Context, reminderId: Long, triggerAt: Long, isSnooze: Boolean) {
+    /**
+     * Escalation: a check-in that is neither confirmed nor snoozed re-alerts every
+     * [ESCALATION_MINUTES], up to [MAX_ESCALATIONS] times. [level] is the re-alert about to be
+     * scheduled (1..MAX); [firingAt] is when the prompt being escalated went off, so the
+     * receiver can tell whether it was confirmed since.
+     */
+    fun scheduleEscalation(
+        context: Context,
+        reminderId: Long,
+        firingAt: Long,
+        level: Int,
+        now: Long = System.currentTimeMillis()
+    ) {
+        val triggerAt = nextEscalationAtMillis(level, now) ?: return
+        setAlarm(context, reminderId, triggerAt, AlarmKind.ESCALATE) {
+            putExtra(EXTRA_ESCALATION_LEVEL, level)
+            putExtra(EXTRA_FIRING_AT, firingAt)
+        }
+    }
+
+    /** When re-alert number [level] should go off, or null once escalation is exhausted. */
+    fun nextEscalationAtMillis(level: Int, now: Long): Long? =
+        if (level in 1..MAX_ESCALATIONS) now + ESCALATION_MINUTES * 60_000L else null
+
+    /** Stops any pending snooze and re-alerts once a check-in is confirmed. */
+    fun clearPendingCheckIn(context: Context, reminderId: Long) {
+        cancelAlarm(context, reminderId, AlarmKind.SNOOZE)
+        cancelAlarm(context, reminderId, AlarmKind.ESCALATE)
+    }
+
+    private fun setAlarm(
+        context: Context,
+        reminderId: Long,
+        triggerAt: Long,
+        kind: AlarmKind,
+        extras: Intent.() -> Unit = {}
+    ) {
         val alarmManager = context.getSystemService(AlarmManager::class.java) ?: return
-        val pendingIntent = pendingIntentFor(context, reminderId, isSnooze)
+        val pendingIntent = pendingIntentFor(context, reminderId, kind, extras)
         try {
             if (canScheduleExactAlarms(context)) {
                 alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
@@ -71,21 +114,45 @@ object ReminderScheduler {
         }
     }
 
-    fun cancelReminder(context: Context, reminderId: Long) {
+    private fun cancelAlarm(context: Context, reminderId: Long, kind: AlarmKind) {
         val alarmManager = context.getSystemService(AlarmManager::class.java) ?: return
-        alarmManager.cancel(pendingIntentFor(context, reminderId))
+        alarmManager.cancel(pendingIntentFor(context, reminderId, kind))
+    }
+
+    /** Cancels everything scheduled for a reminder (turned off, deleted, or data wiped). */
+    fun cancelReminder(context: Context, reminderId: Long) {
+        AlarmKind.values().forEach { cancelAlarm(context, reminderId, it) }
     }
 
     fun rescheduleAll(context: Context, reminders: List<Reminder>) {
         reminders.forEach { scheduleReminder(context, it) }
     }
 
-    // Extras don't take part in PendingIntent matching, so cancelReminder() finds the alarm
-    // whichever isSnooze value it was set with; FLAG_UPDATE_CURRENT swaps in the new extras.
-    private fun pendingIntentFor(context: Context, reminderId: Long, isSnooze: Boolean = false): PendingIntent {
+    /**
+     * The three alarms a reminder can have pending at once. Each has its own intent action,
+     * which makes them distinct PendingIntents (extras don't count for matching). Alarms set
+     * by older builds carry no action and are treated as [FIRE].
+     */
+    enum class AlarmKind(val action: String) {
+        FIRE("com.aistudio.drinkyourwater.hydra.action.REMINDER_FIRE"),
+        SNOOZE("com.aistudio.drinkyourwater.hydra.action.REMINDER_SNOOZE"),
+        ESCALATE("com.aistudio.drinkyourwater.hydra.action.REMINDER_ESCALATE");
+
+        companion object {
+            fun fromAction(action: String?): AlarmKind = values().firstOrNull { it.action == action } ?: FIRE
+        }
+    }
+
+    private fun pendingIntentFor(
+        context: Context,
+        reminderId: Long,
+        kind: AlarmKind,
+        extras: Intent.() -> Unit = {}
+    ): PendingIntent {
         val intent = Intent(context, ReminderAlarmReceiver::class.java).apply {
+            action = kind.action
             putExtra(NotificationHelper.EXTRA_REMINDER_ID, reminderId)
-            putExtra(EXTRA_IS_SNOOZE, isSnooze)
+            extras()
         }
         return PendingIntent.getBroadcast(
             context,

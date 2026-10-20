@@ -9,6 +9,7 @@ import com.aistudio.drinkyourwater.hydra.data.model.Framework
 import com.aistudio.drinkyourwater.hydra.data.model.Reminder
 import com.aistudio.drinkyourwater.hydra.data.model.UserProfile
 import com.aistudio.drinkyourwater.hydra.data.repository.WaterRepository
+import com.aistudio.drinkyourwater.hydra.reminders.NotificationHelper
 import com.aistudio.drinkyourwater.hydra.reminders.ReminderScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -89,19 +90,26 @@ class WaterViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /** Persists the snooze and reschedules this reminder to re-fire in ~10 minutes. */
+    /**
+     * Persists the snooze and re-fires this reminder in ~10 minutes. Snoozing also stops the
+     * current re-alerts; the snoozed prompt starts its own escalation if it's ignored too.
+     */
     fun snoozeReminder(reminderId: Long) {
         viewModelScope.launch {
             val updated = repository.incrementSnoozeCount(reminderId)
             if (updated != null) {
                 ReminderScheduler.scheduleSnooze(getApplication(), updated)
+                NotificationHelper.dismissReminderNotification(getApplication(), reminderId)
             }
         }
     }
 
+    /** Logs the check-in and stops any pending snooze or re-alert for it. */
     fun logCompletion(reminderId: Long, reminderText: String, snoozeCount: Int) {
         viewModelScope.launch {
             repository.logCompletionAndUnlock(reminderId, reminderText, snoozeCount)
+            ReminderScheduler.clearPendingCheckIn(getApplication(), reminderId)
+            NotificationHelper.dismissReminderNotification(getApplication(), reminderId)
         }
     }
 
