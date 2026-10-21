@@ -84,25 +84,31 @@ fun LockOverlayScreen(
     reminder: Reminder?,
     userProfile: UserProfile,
     onConfirmHydration: (Long, String, Int) -> Unit,
-    onSnooze: (Long) -> Unit
+    onSnooze: (Long) -> Unit,
+    pinScreen: Boolean = false
 ) {
     var snoozeCount by remember { mutableIntStateOf(reminder?.snoozeCount ?: 0) }
     var isConfirmed by remember { mutableStateOf(false) }
 
-    // Pin the app so Home/Recents/system Back can't be used to skip the reminder. Requires
-    // "Screen pinning" to be enabled on the device (Settings > Security); if it's off,
-    // startLockTask() is a no-op here rather than throwing, so the overlay still shows,
-    // just without OS-level pinning.
+    // Strict mode only (Settings): pin the app so Home/Recents can't be used to skip the
+    // check-in. Android asks the user to confirm pinning every time, and if "Screen pinning"
+    // is off in system settings startLockTask() does nothing, so the overlay still shows.
+    // Without strict mode the check-in is still full-screen with no exit button and Back
+    // disabled, and unanswered check-ins re-alert (see ReminderScheduler escalation).
     val activity = LocalContext.current.findActivity()
-    DisposableEffect(Unit) {
-        try {
-            activity?.startLockTask()
-        } catch (e: Exception) {
+    DisposableEffect(pinScreen) {
+        if (pinScreen) {
+            try {
+                activity?.startLockTask()
+            } catch (e: Exception) {
+            }
         }
         onDispose {
-            try {
-                activity?.stopLockTask()
-            } catch (e: Exception) {
+            if (pinScreen) {
+                try {
+                    activity?.stopLockTask()
+                } catch (e: Exception) {
+                }
             }
         }
     }
@@ -173,7 +179,7 @@ fun LockOverlayScreen(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "LOCK SCREEN OVERLAY ACTIVE",
+                        text = "CHECK-IN REQUIRED",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 1.sp,

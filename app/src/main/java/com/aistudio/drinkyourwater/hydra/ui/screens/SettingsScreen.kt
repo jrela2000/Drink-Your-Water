@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.BeachAccess
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FormatQuote
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Star
@@ -60,9 +61,36 @@ fun SettingsScreen(
     onUpdateOverlayTheme: (String) -> Unit,
     onUpdateMotivationalStyle: (String) -> Unit,
     onUpdateVacationMode: (Int?) -> Unit,
-    onWipeUserDataAndReset: () -> Unit
+    onWipeUserDataAndReset: () -> Unit,
+    strictMode: Boolean = false,
+    onUpdateStrictMode: (Boolean) -> Unit = {}
 ) {
     var showSoundSheet by remember { mutableStateOf(false) }
+    var showStrictModeDialog by remember { mutableStateOf(false) }
+
+    if (showStrictModeDialog) {
+        AlertDialog(
+            onDismissRequest = { showStrictModeDialog = false },
+            title = { Text("Turn on Strict mode?") },
+            text = {
+                Text(
+                    "Check-ins will pin your screen so Home and Recents can't skip them. " +
+                        "Android shows an \"App is pinned\" notice each time: tap Got it. " +
+                        "To get out in an emergency, swipe up and hold (or hold Back + Recents). " +
+                        "If nothing gets pinned, turn on Screen pinning in your phone's Security settings."
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    onUpdateStrictMode(true)
+                    showStrictModeDialog = false
+                }) { Text("Turn On", fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showStrictModeDialog = false }) { Text("Cancel") }
+            }
+        )
+    }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
 
     if (showSoundSheet) {
@@ -230,6 +258,23 @@ fun SettingsScreen(
                         if (vacationActive) onUpdateVacationMode(null) else onUpdateVacationMode(3)
                     },
                     testTag = "settings_vacation_mode"
+                )
+            }
+
+            // Strict mode (screen pinning), off by default
+            item {
+                SettingsRowItem(
+                    icon = Icons.Default.Lock,
+                    title = "Strict Mode",
+                    subtitle = if (strictMode) {
+                        "On: check-ins pin your screen until you confirm or snooze"
+                    } else {
+                        "Off: tap to pin your screen during check-ins"
+                    },
+                    onClick = {
+                        if (strictMode) onUpdateStrictMode(false) else showStrictModeDialog = true
+                    },
+                    testTag = "settings_strict_mode"
                 )
             }
 

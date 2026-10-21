@@ -88,6 +88,36 @@ jobs:
           grep -E "error:|warning: .*/ios/DrinkYourWater|\*\* BUILD" xcodebuild-device.log || true
           exit $status
 
+      # A Release build for the iOS Simulator, zipped the way Appetize.io expects, so the app
+      # can be tried in a browser without a Mac. Universal (Apple Silicon + Intel) so it runs
+      # on any simulator host. ditto keeps the executable bit, which upload-artifact drops.
+      - name: Package simulator app for Appetize
+        run: |
+          xcodebuild build \
+            -project DrinkYourWater.xcodeproj \
+            -scheme DrinkYourWater \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -destination "generic/platform=iOS Simulator" \
+            -derivedDataPath build-simulator \
+            ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            > xcodebuild-simulator.log 2>&1 && status=0 || status=$?
+          grep -E "error:|\*\* BUILD" xcodebuild-simulator.log || true
+          if [ "$status" -ne 0 ]; then exit $status; fi
+          APP=build-simulator/Build/Products/Release-iphonesimulator/DrinkYourWater.app
+          lipo -info "$APP/DrinkYourWater"
+          mkdir -p appetize
+          ditto -c -k --sequesterRsrc --keepParent "$APP" appetize/DrinkYourWater-simulator.zip
+          ls -la appetize
+
+      - name: Upload simulator app
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-simulator-app-for-appetize
+          path: ios/appetize/DrinkYourWater-simulator.zip
+          if-no-files-found: error
+
       - name: Capture screenshots
         run: |
           APP=build/Build/Products/Debug-iphonesimulator/DrinkYourWater.app

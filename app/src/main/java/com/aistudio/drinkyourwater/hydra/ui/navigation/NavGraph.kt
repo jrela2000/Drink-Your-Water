@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -34,6 +35,7 @@ fun MainAppNavGraph(
     onPendingReminderConsumed: () -> Unit = {}
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val strictMode by viewModel.strictMode.collectAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: "home"
 
     val isMainTab = currentRoute in listOf("home", "progress", "settings")
@@ -122,7 +124,9 @@ fun MainAppNavGraph(
                         navController.navigate("onboarding") {
                             popUpTo("home") { inclusive = true }
                         }
-                    }
+                    },
+                    strictMode = strictMode,
+                    onUpdateStrictMode = { viewModel.setStrictMode(it) }
                 )
             }
 
@@ -138,6 +142,7 @@ fun MainAppNavGraph(
                 )
 
                 LockOverlayScreen(
+                    pinScreen = strictMode,
                     reminder = reminder,
                     userProfile = uiState.userProfile,
                     onConfirmHydration = { remId, text, snoozeCount ->

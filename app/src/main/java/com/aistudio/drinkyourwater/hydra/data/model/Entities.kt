@@ -7,13 +7,13 @@ import androidx.room.PrimaryKey
 data class Reminder(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val text: String,
-    val frequency: String = "1hr", // 30min | 1hr | 2hr | 3hr | custom
+    val frequency: String = "daily", // daily | 30min | 1hr | 2hr | 3hr | custom
     val customIntervalMinutes: Int = 60,
     val startTime: String = "08:00",
     val endTime: String = "22:00",
     val activeDays: String = "true,true,true,true,true,true,true", // 7 bools as CSV
     val isActive: Boolean = true,
-    val snoozeCount: Int = 0,
+    val snoozeCount: Int = 0, // snoozes used on the current firing; reset when the next one starts
     val frameworkId: Long? = null,
     val scheduledTime: String = "09:00 AM"
 )

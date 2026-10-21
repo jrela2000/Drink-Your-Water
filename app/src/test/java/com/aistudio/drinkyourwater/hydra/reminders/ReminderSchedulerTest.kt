@@ -89,4 +89,66 @@ class ReminderSchedulerTest {
 
         assertEquals(calendarAt(9, 45).timeInMillis, trigger)
     }
+
+    @Test
+    fun `daily reminder fires once at its time, not every hour`() {
+        val daily = reminder(scheduledTime = "09:00 AM", frequency = "daily")
+
+        assertEquals(
+            calendarAt(9, 0).timeInMillis,
+            ReminderScheduler.nextTriggerAtMillis(daily, calendarAt(8, 0).timeInMillis)
+        )
+        // Just after 9am the next firing is tomorrow, not 10am.
+        assertEquals(
+            calendarAt(9, 0, dayOfMonth = 2).timeInMillis,
+            ReminderScheduler.nextTriggerAtMillis(daily, calendarAt(9, 1).timeInMillis)
+        )
+    }
+
+    @Test
+    fun `daily reminder skips inactive weekdays`() {
+        val notMonday = reminder(frequency = "daily", activeDays = "false,true,true,true,true,true,true")
+
+        val trigger = ReminderScheduler.nextTriggerAtMillis(notMonday, calendarAt(8, 0).timeInMillis)
+
+        assertEquals(calendarAt(9, 0, dayOfMonth = 2).timeInMillis, trigger)
+    }
+
+    @Test
+    fun `new reminders default to once a day`() {
+        assertEquals(ReminderScheduler.FREQUENCY_DAILY, Reminder(text = "Water").frequency)
+    }
+
+    @Test
+    fun `frequency labels are readable`() {
+        assertEquals("Once a day", ReminderScheduler.frequencyLabel("daily"))
+        assertEquals("Every hour", ReminderScheduler.frequencyLabel("1hr"))
+        assertEquals("Every 45min", ReminderScheduler.frequencyLabel("45min"))
+    }
+
+    @Test
+    fun `clock times parse only when valid`() {
+        assertEquals(21 to 30, ReminderScheduler.parseClockTime("9:30 PM"))
+        assertEquals(0 to 5, ReminderScheduler.parseClockTime("12:05 am"))
+        assertNull(ReminderScheduler.parseClockTime("25:00 PM"))
+        assertNull(ReminderScheduler.parseClockTime("noon"))
+    }
+
+    @Test
+    fun `escalation re-alerts every 10 minutes, three times, then stops`() {
+        val now = calendarAt(9, 0).timeInMillis
+        for (level in 1..ReminderScheduler.MAX_ESCALATIONS) {
+            assertEquals(calendarAt(9, 10).timeInMillis, ReminderScheduler.nextEscalationAtMillis(level, now))
+        }
+        assertNull(ReminderScheduler.nextEscalationAtMillis(ReminderScheduler.MAX_ESCALATIONS + 1, now))
+        assertNull(ReminderScheduler.nextEscalationAtMillis(0, now))
+    }
+
+    @Test
+    fun `alarms from older builds without an action are regular firings`() {
+        assertEquals(ReminderScheduler.AlarmKind.FIRE, ReminderScheduler.AlarmKind.fromAction(null))
+        ReminderScheduler.AlarmKind.values().forEach {
+            assertEquals(it, ReminderScheduler.AlarmKind.fromAction(it.action))
+        }
+    }
 }

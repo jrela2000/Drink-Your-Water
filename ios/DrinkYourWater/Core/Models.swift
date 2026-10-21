@@ -229,6 +229,9 @@ struct AppData: Codable, Hashable {
 
     static let maxSnoozesPerFiring = 2
     static let snoozeMinutes = 10
+    /// An unanswered check-in re-alerts every `escalationMinutes`, up to `maxEscalations` times.
+    static let escalationMinutes = 10
+    static let maxEscalations = 3
 
     func framework(for reminder: Reminder) -> Framework? {
         guard let id = reminder.frameworkID else { return nil }

@@ -15,6 +15,9 @@ interface CompletionLogDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertLog(log: CompletionLog): Long
 
+    @Query("SELECT COUNT(*) FROM completion_logs WHERE reminderId = :reminderId AND completedAt >= :since")
+    suspend fun countCompletionsSince(reminderId: Long, since: Long): Int
+
     @Query("DELETE FROM completion_logs")
     suspend fun deleteAll()
 }
