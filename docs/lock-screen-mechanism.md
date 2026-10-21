@@ -33,6 +33,21 @@ Use/adapt this directly for an FAQ page:
 > remove. In everyday use, though, there's no visible "X" or back-button shortcut out of the
 > reminder screen; only confirming the habit or using a snooze will dismiss it normally.
 
+## Update: pinning is now opt-in (Strict Mode)
+
+On a real phone, Android shows its own "App is pinned" dialog every time `startLockTask()`
+runs (with a "Personal data may be accessible" warning), and its "No thanks" button skips
+pinning entirely. That made every check-in start with a system dialog while adding little
+real enforcement. So:
+
+- Pinning is off by default and lives behind **Settings → Strict Mode** (stored per device in
+  `StrictModePreference`), with a one-time explanation when it's turned on.
+- Accountability now comes from **escalation**: an unanswered check-in re-alerts every 10
+  minutes, up to three more times, until it's confirmed or snoozed (`ReminderScheduler`).
+- The check-in itself is unchanged: full screen, no close button, Back ignored.
+
+The rest of this document explains the original pinning design, which Strict Mode still uses.
+
 ## Why this exists
 
 The product goal (per the founder) is to mimic [Pray Focus](https://prayfocus.app)'s "locks

@@ -7,6 +7,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.aistudio.drinkyourwater.hydra.data.db.AppDatabase
 import com.aistudio.drinkyourwater.hydra.data.repository.WaterRepository
 import com.aistudio.drinkyourwater.hydra.reminders.ReminderScheduler
+import com.aistudio.drinkyourwater.hydra.settings.StrictModePreference
 import com.aistudio.drinkyourwater.hydra.ui.screens.normalizeClockTime
 import java.io.File
 import java.util.Calendar
@@ -170,6 +171,15 @@ class ReminderDataTest {
         assertTrue(!runBlocking { repository.isCompletedSince(2, firedAt) })
         // Confirmations from before this firing don't count.
         assertTrue(!runBlocking { repository.isCompletedSince(1, System.currentTimeMillis() + 60_000L) })
+    }
+
+    @Test
+    fun `strict mode screen pinning is off until turned on`() {
+        assertTrue(!StrictModePreference.isEnabled(context))
+        StrictModePreference.setEnabled(context, true)
+        assertTrue(StrictModePreference.isEnabled(context))
+        StrictModePreference.setEnabled(context, false)
+        assertTrue(!StrictModePreference.isEnabled(context))
     }
 
     @Test

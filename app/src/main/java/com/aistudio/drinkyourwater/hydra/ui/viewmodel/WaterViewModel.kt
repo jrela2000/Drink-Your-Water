@@ -11,6 +11,7 @@ import com.aistudio.drinkyourwater.hydra.data.model.UserProfile
 import com.aistudio.drinkyourwater.hydra.data.repository.WaterRepository
 import com.aistudio.drinkyourwater.hydra.reminders.NotificationHelper
 import com.aistudio.drinkyourwater.hydra.reminders.ReminderScheduler
+import com.aistudio.drinkyourwater.hydra.settings.StrictModePreference
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -167,6 +168,16 @@ class WaterViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private val _strictMode = MutableStateFlow(StrictModePreference.isEnabled(application))
+
+    /** Whether check-ins pin the screen. See [StrictModePreference]. */
+    val strictMode: StateFlow<Boolean> = _strictMode
+
+    fun setStrictMode(enabled: Boolean) {
+        StrictModePreference.setEnabled(getApplication(), enabled)
+        _strictMode.value = enabled
+    }
+
     fun completeOnboarding(style: String) {
         viewModelScope.launch {
             repository.completeOnboarding(style)
@@ -174,6 +185,7 @@ class WaterViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun wipeAllData() {
+        setStrictMode(false)
         viewModelScope.launch {
             uiState.value.reminders.forEach { ReminderScheduler.cancelReminder(getApplication(), it.id) }
             repository.wipeAllUserDataAndReset()
