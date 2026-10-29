@@ -1,0 +1,108 @@
+name: iOS TestFlight
+
+# Manual only: Actions tab > "iOS TestFlight" > Run workflow.
+# Archives a signed Release build and uploads it to App Store Connect, where it appears in
+# TestFlight after Apple finishes processing (usually 5-30 minutes).
+#
+# Needs these repository secrets (Settings > Secrets and variables > Actions), from an
+# App Store Connect API key with the Admin role (Users and Access > Integrations > Team Keys):
+#   ASC_KEY_ID      the key's ID
+#   ASC_ISSUER_ID   the issuer ID shown above the keys list
+#   ASC_KEY_P8      the full contents of the downloaded AuthKey_XXXX.p8 file
+# Signing is automatic: Xcode creates the certificate, App ID and provisioning profile.
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ios-testflight
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    runs-on: macos-15
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: ios
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check App Store Connect secrets
+        run: |
+          missing=""
+          [ -n "$ASC_KEY_ID" ] || missing="$missing ASC_KEY_ID"
+          [ -n "$ASC_ISSUER_ID" ] || missing="$missing ASC_ISSUER_ID"
+          [ -n "$ASC_KEY_P8" ] || missing="$missing ASC_KEY_P8"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing repository secrets:$missing (see the comment at the top of this workflow)."
+            exit 1
+          fi
+          printf '%s\n' "$ASC_KEY_P8" > "$RUNNER_TEMP/AuthKey.p8"
+
+      - name: Install XcodeGen and generate project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      - name: Archive (build number = run number)
+        run: |
+          xcodebuild archive \
+            -project DrinkYourWater.xcodeproj \
+            -scheme DrinkYourWater \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -archivePath "$RUNNER_TEMP/DrinkYourWater.xcarchive" \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }} \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            > archive.log 2>&1 && status=0 || status=$?
+          grep -E "error:|\*\* ARCHIVE" archive.log || true
+          if [ "$status" -ne 0 ]; then tail -n 60 archive.log; exit $status; fi
+
+      - name: Export and upload to App Store Connect
+        run: |
+          TEAM_ID=$(grep -E '^\s*DEVELOPMENT_TEAM:' project.yml | head -1 | sed -E 's/.*"(.*)".*/\1/')
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>${TEAM_ID}</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict>
+          </plist>
+          PLIST
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/DrinkYourWater.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            > export.log 2>&1 && status=0 || status=$?
+          grep -E "error:|\*\* EXPORT|Upload|uploaded" export.log || true
+          if [ "$status" -ne 0 ]; then tail -n 60 export.log; exit $status; fi
+          echo "Uploaded build ${{ github.run_number }}. It shows up in App Store Connect > TestFlight once Apple finishes processing."
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: testflight-logs
+          path: ios/*.log
+          if-no-files-found: ignore
+
+      - name: Remove API key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/AuthKey.p8"
