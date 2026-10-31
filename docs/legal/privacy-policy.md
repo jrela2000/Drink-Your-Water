@@ -1,7 +1,8 @@
 # Drink Your Water — Privacy Policy
 
-**Effective date:** [EFFECTIVE DATE]
-**Applies to:** the Drink Your Water apps for Android and iPhone.
+**Effective date:** October 31, 2026
+
+**Applies to:** the Drink Your Water apps for Android and iPhone (listed in the stores as "Drink Your Water: Check-ins").
 
 ## The short version
 
@@ -14,7 +15,7 @@ We built Drink Your Water this way on purpose. We don't think a habit app should
 
 ## Who we are
 
-Drink Your Water is made by [STUDIO OR LEGAL NAME] ("we", "us"). You can reach us at [CONTACT EMAIL].
+Drink Your Water is made by Jarrod Simpson ("we", "us"). You can reach us at support@jarrodqsimpson.com.
 
 ## What the app stores, and where
 
@@ -66,7 +67,7 @@ Drink Your Water isn't directed at children under 13, and it doesn't collect per
 
 ## Your rights (GDPR, UK GDPR, California and similar laws)
 
-These laws give you rights over the personal data a company holds about you, such as access, correction, deletion and opting out of sale. Because we don't collect or hold any personal data, there's nothing for us to access, correct, delete or sell. Your data stays on your device, where you can view and delete it yourself. If you have questions, contact us at [CONTACT EMAIL].
+These laws give you rights over the personal data a company holds about you, such as access, correction, deletion and opting out of sale. Because we don't collect or hold any personal data, there's nothing for us to access, correct, delete or sell. Your data stays on your device, where you can view and delete it yourself. If you have questions, contact us at support@jarrodqsimpson.com.
 
 ## Security
 
@@ -78,10 +79,10 @@ We built Drink Your Water with the help of AI software development tools, includ
 
 ## Changes to this policy
 
-If we change this policy, we'll update the effective date above and post the new version at [PRIVACY POLICY URL]. If a change affects how your data is handled, for example if we ever add a feature that sends data off your device, we'll explain it in the app before it takes effect.
+If we change this policy, we'll update the effective date above and post the new version at https://jarrodqsimpson.com/drink-your-water/privacy. If a change affects how your data is handled, for example if we ever add a feature that sends data off your device, we'll explain it in the app before it takes effect.
 
 ## Contact
 
-[STUDIO OR LEGAL NAME]
-[CONTACT EMAIL]
-[WEBSITE URL]
+Jarrod Simpson
+support@jarrodqsimpson.com
+https://jarrodqsimpson.com
