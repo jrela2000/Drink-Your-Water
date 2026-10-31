@@ -112,12 +112,32 @@ server, no accounts, no analytics, no tracking.
 Both apps now share the reminder behavior: default reminders fire once a day, each new firing
 gets two snoozes, and the chosen chime plays.
 
+## TestFlight (no Mac needed)
+
+The **iOS TestFlight** workflow (Actions tab, run manually) archives a signed build and
+uploads it to App Store Connect. The build number is the workflow's run number, so each
+upload is accepted. One-time setup, after the Apple Developer enrollment is approved:
+
+1. In App Store Connect, go to **Users and Access → Integrations → Team Keys** and create
+   a key with the **Admin** role. Admin lets Xcode create the signing certificate and
+   profiles automatically. Download the `.p8` file; Apple only lets you download it once.
+2. In GitHub, go to **Settings → Secrets and variables → Actions** and add three secrets:
+   - `ASC_KEY_ID`: the key ID.
+   - `ASC_ISSUER_ID`: the issuer ID shown above the keys list.
+   - `ASC_KEY_P8`: the whole contents of the `.p8` file.
+3. In App Store Connect, go to **Apps → + → New App**: choose iOS, enter the name, and pick
+   the bundle ID `com.aistudio.drinkyourwater.hydra`.
+   If the bundle ID isn't in the list yet, register it first at developer.apple.com under
+   **Certificates, Identifiers & Profiles → Identifiers → +** (App ID, explicit bundle ID,
+   and tick **Time Sensitive Notifications**).
+4. Run **iOS TestFlight**. When Apple finishes processing, add yourself as an internal
+   tester in TestFlight and install from the TestFlight app on your iPhone.
+
 ## Before submitting to the App Store
 
 - [ ] Apple Developer Program membership ($99/year) and a Team selected in Xcode.
-- [ ] Confirm the bundle ID. It's `com.aistudio.drinkyourwater.hydra` to match Android.
-      It can't be changed once the app record exists in App Store Connect, so change it in
-      `project.yml` first if you want your own (for example `com.yourname.drinkyourwater`).
+- [x] Bundle ID decided: `com.aistudio.drinkyourwater.hydra`, matching the Android app. It
+      can't be changed once the App Store Connect record exists.
 - [ ] Create the app in App Store Connect and archive from Xcode (Product → Archive →
       Distribute → App Store Connect), then test with TestFlight.
 - [ ] Privacy policy URL (required even though no data leaves the phone). The App Privacy
