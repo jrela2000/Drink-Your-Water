@@ -31,7 +31,7 @@ flow. Notifications, chimes and Time Sensitive delivery still need a real iPhone
 
 ## Run it on your Mac
 
-You need a Mac with Xcode 16 or newer.
+You need a Mac with Xcode 26 or newer (App Store Connect only accepts builds from Xcode 26+).
 
 ```bash
 brew install xcodegen      # one time
