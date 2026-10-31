@@ -54,3 +54,14 @@ the effective date whenever either document changes.
 - **The web demo** at drinkyourwater.base44.app is hosted by Base44, and these drafts don't
   cover it. If it stays public, check what Base44 collects, then extend the policy or give
   the demo its own notice.
+
+## Paste-ready web pages
+
+`web/` has HTML versions of both documents, built from the Markdown files by `web/build.py`
+(re-run it after any edit: `python3 docs/legal/web/build.py docs/legal`).
+
+- **`privacy-snippet.html` / `terms-snippet.html`:** paste into a "Custom HTML" or "Embed code"
+  block in your site builder (WordPress, Squarespace, Wix and others). Styles are scoped so they
+  won't affect the rest of your site.
+- **`privacy.html` / `terms.html`:** complete pages, including dark mode, if you upload files to
+  your host directly. For example, upload `privacy.html` as `drink-your-water/privacy/index.html`.

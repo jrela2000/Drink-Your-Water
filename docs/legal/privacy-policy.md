@@ -1,6 +1,7 @@
 # Drink Your Water — Privacy Policy
 
 **Effective date:** October 31, 2026
+
 **Applies to:** the Drink Your Water apps for Android and iPhone (listed in the stores as "Drink Your Water: Check-ins").
 
 ## The short version
