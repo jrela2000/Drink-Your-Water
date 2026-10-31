@@ -42,7 +42,31 @@ jobs:
             echo "::error::Missing repository secrets:$missing (see the comment at the top of this workflow)."
             exit 1
           fi
-          printf '%s\n' "$ASC_KEY_P8" > "$RUNNER_TEMP/AuthKey.p8"
+          # Rebuild the key file from whatever was pasted: tolerates CRLF line endings,
+          # surrounding quotes or spaces, literal "\n", a missing BEGIN/END line, or the
+          # whole file base64-encoded. Never prints the key itself.
+          strip() { tr -d '\r' | sed -E 's/\\n//g; s/-----(BEGIN|END) PRIVATE KEY-----//g' | tr -d " \t\n\"'"; }
+          body=$(printf '%s' "$ASC_KEY_P8" | strip)
+          if printf '%s' "$body" | base64 -d 2>/dev/null | grep -aq 'BEGIN PRIVATE KEY'; then
+            body=$(printf '%s' "$body" | base64 -d | strip)
+          fi
+          key="$RUNNER_TEMP/AuthKey.p8"
+          { echo "-----BEGIN PRIVATE KEY-----"; printf '%s' "$body" | fold -w 64; echo; echo "-----END PRIVATE KEY-----"; } > "$key"
+          if ! openssl pkey -in "$key" -noout 2>/dev/null; then
+            echo "::error::ASC_KEY_P8 isn't a usable private key (${#body} key characters after cleanup; a real one is about 200)."
+            if [[ "$ASC_KEY_P8" =~ ^[[:space:]]*[A-Z0-9]{10}[[:space:]]*$ ]]; then
+              echo "::error::It looks like the Key ID. Paste the contents of the AuthKey_XXXX.p8 file instead."
+            elif [[ "$ASC_KEY_P8" =~ ^[[:space:]]*[0-9a-fA-F-]{36}[[:space:]]*$ ]]; then
+              echo "::error::It looks like the Issuer ID. Paste the contents of the AuthKey_XXXX.p8 file instead."
+            else
+              echo "::error::Open AuthKey_XXXX.p8 in a text editor and paste everything, including the BEGIN and END lines."
+            fi
+            rm -f "$key"
+            exit 1
+          fi
+          [[ "$ASC_KEY_ID" =~ ^[[:space:]]*[A-Z0-9]{10}[[:space:]]*$ ]] || echo "::warning::ASC_KEY_ID doesn't look like a 10-character key ID."
+          [[ "$ASC_ISSUER_ID" =~ ^[[:space:]]*[0-9a-fA-F-]{36}[[:space:]]*$ ]] || echo "::warning::ASC_ISSUER_ID doesn't look like an issuer ID (a UUID like 69a6de7f-...)."
+          echo "API key file looks valid."
 
       - name: Install XcodeGen and generate project
         run: |
