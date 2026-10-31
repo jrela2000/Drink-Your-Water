@@ -1,8 +1,8 @@
 # Drink Your Water — Terms of Use
 
-**Effective date:** [EFFECTIVE DATE]
+**Effective date:** October 31, 2026
 
-These terms are an agreement between you and [STUDIO OR LEGAL NAME] ("we", "us") for your use of the Drink Your Water apps for Android and iPhone (the "App"). By downloading or using the App, you agree to these terms. If you don't agree, please don't use the App.
+These terms are an agreement between you and Jarrod Simpson ("we", "us") for your use of the Drink Your Water apps for Android and iPhone (the "App"). By downloading or using the App, you agree to these terms. If you don't agree, please don't use the App.
 
 ## 1. Who can use the App
 
@@ -46,7 +46,7 @@ The check-in screen is designed to be hard to skip. On Android, the optional **S
 
 ## 7. Your data
 
-Everything you create in the App (reminders, habits, messages and check-in history) belongs to you and is stored only on your device. See our [Privacy Policy]([PRIVACY POLICY URL]). Because we don't keep a copy, we can't restore your data if your phone is lost or reset, or the App is deleted. Keeping backups is up to you.
+Everything you create in the App (reminders, habits, messages and check-in history) belongs to you and is stored only on your device. See our [Privacy Policy](https://jarrodqsimpson.com/drink-your-water/privacy). Because we don't keep a copy, we can't restore your data if your phone is lost or reset, or the App is deleted. Keeping backups is up to you.
 
 ## 8. Acceptable use
 
@@ -70,7 +70,7 @@ Nothing in these terms limits liability that can't be limited by law, or your ri
 
 ## 12. Changes and termination
 
-We may update the App or these terms. If we make a material change to these terms, we'll update the effective date and post the new version at [TERMS URL]. Continuing to use the App after a change means you accept it.
+We may update the App or these terms. If we make a material change to these terms, we'll update the effective date and post the new version at https://jarrodqsimpson.com/drink-your-water/terms. Continuing to use the App after a change means you accept it.
 
 You can stop using the App at any time by uninstalling it. We may end your license if you break these terms.
 
@@ -88,10 +88,10 @@ If you got the App from the Apple App Store:
 
 ## 14. Governing law
 
-These terms are governed by the laws of [STATE / COUNTRY], without regard to its conflict-of-law rules, except where the law of your home country requires otherwise.
+These terms are governed by the laws of the State of Illinois, USA, without regard to its conflict-of-law rules, except where the law of your home country requires otherwise.
 
 ## 15. Contact
 
-[STUDIO OR LEGAL NAME]
-[CONTACT EMAIL]
-[WEBSITE URL]
+Jarrod Simpson
+support@jarrodqsimpson.com
+https://jarrodqsimpson.com
