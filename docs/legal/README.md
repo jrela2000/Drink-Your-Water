@@ -7,16 +7,21 @@ sending anything.
 > These are plain-language drafts, not legal advice. Have them reviewed if you add accounts,
 > payments, analytics, ads, AI features or anything that sends data off the phone.
 
-## Before publishing: fill in the placeholders
+## Details used
 
-| Placeholder | What to put |
+| Field | Value |
 |---|---|
-| `[STUDIO OR LEGAL NAME]` | Your name or business name, as it appears on your Play Console and App Store accounts |
-| `[CONTACT EMAIL]` | A support address you'll actually check (stores require one) |
-| `[WEBSITE URL]` | e.g. `https://jarrodqsimpson.com` |
-| `[PRIVACY POLICY URL]`, `[TERMS URL]` | Where each page is published on jarrodqsimpson.com |
-| `[EFFECTIVE DATE]` | The day you publish |
-| `[STATE / COUNTRY]` | Where you or your business are based, for governing law |
+| Publisher | Jarrod Simpson |
+| Contact | support@jarrodqsimpson.com |
+| Website | https://jarrodqsimpson.com |
+| Privacy Policy URL | https://jarrodqsimpson.com/drink-your-water/privacy |
+| Terms URL | https://jarrodqsimpson.com/drink-your-water/terms |
+| Effective date | October 31, 2026 |
+| Governing law | State of Illinois, USA |
+| Store name | Drink Your Water: Check-ins |
+
+If you publish the pages at different addresses, update both URLs in both documents. Update
+the effective date whenever either document changes.
 
 ## Facts the drafts rely on (re-check if the code changes)
 
@@ -49,3 +54,14 @@ sending anything.
 - **The web demo** at drinkyourwater.base44.app is hosted by Base44, and these drafts don't
   cover it. If it stays public, check what Base44 collects, then extend the policy or give
   the demo its own notice.
+
+## Paste-ready web pages
+
+`web/` has HTML versions of both documents, built from the Markdown files by `web/build.py`
+(re-run it after any edit: `python3 docs/legal/web/build.py docs/legal`).
+
+- **`privacy-snippet.html` / `terms-snippet.html`:** paste into a "Custom HTML" or "Embed code"
+  block in your site builder (WordPress, Squarespace, Wix and others). Styles are scoped so they
+  won't affect the rest of your site.
+- **`privacy.html` / `terms.html`:** complete pages, including dark mode, if you upload files to
+  your host directly. For example, upload `privacy.html` as `drink-your-water/privacy/index.html`.
