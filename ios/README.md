@@ -102,15 +102,13 @@ stopping.
 All data stays on the device in a single JSON file in Application Support. Nothing goes to a
 server, no accounts, no analytics, no tracking.
 
-## Differences from the Android build
+## Shared behavior with the Android build
 
-- **Stats are real.** Android seeds a 3-day streak, 7-day best and 18 completions on first
-  launch, and the weekly chart is hard-coded. Streaks, totals and the weekly chart are computed
-  here from actual check-ins. A day counts toward the streak when at least one check-in was
-  confirmed.
-
-Both apps now share the reminder behavior: default reminders fire once a day, each new firing
-gets two snoozes, and the chosen chime plays.
+Both apps now behave the same way:
+- Default reminders fire once a day.
+- Each new firing gets two snoozes, and the chosen chime plays.
+- Streaks, totals, today's check-ins and the weekly chart are computed from actual confirmed
+  check-ins. A day counts toward the streak when at least one check-in was confirmed.
 
 ## TestFlight (no Mac needed)
 

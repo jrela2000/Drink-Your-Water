@@ -31,7 +31,7 @@ import com.aistudio.drinkyourwater.hydra.ui.theme.IceTeal
 data class DayProgress(
     val dayLabel: String,
     val count: Int,
-    val target: Int = 6,
+    val target: Int,
     val isToday: Boolean = false
 )
 
@@ -59,7 +59,7 @@ fun WeeklyChart(
             )
 
             Text(
-                text = "Daily goal: 6 glasses per day",
+                text = "Check-ins confirmed vs. planned each day",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 2.dp, bottom = 16.dp)
@@ -73,7 +73,11 @@ fun WeeklyChart(
                 verticalAlignment = Alignment.Bottom
             ) {
                 weeklyData.forEach { day ->
-                    val fraction = (day.count.toFloat() / day.target.toFloat()).coerceIn(0f, 1f)
+                    val fraction = when {
+                        day.target > 0 -> (day.count.toFloat() / day.target.toFloat()).coerceIn(0f, 1f)
+                        day.count > 0 -> 1f
+                        else -> 0f
+                    }
                     val barHeightFraction = if (fraction > 0f) fraction else 0.08f
 
                     Column(
@@ -101,7 +105,7 @@ fun WeeklyChart(
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(
                                     if (day.isToday) FreshBlue
-                                    else if (day.count >= day.target) IceTeal
+                                    else if (day.target > 0 && day.count >= day.target) IceTeal
                                     else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
                                 )
                         )

@@ -97,7 +97,7 @@ fun ProgressRing(
             )
 
             Text(
-                text = "Glass Hydrations",
+                text = "Check-ins Today",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

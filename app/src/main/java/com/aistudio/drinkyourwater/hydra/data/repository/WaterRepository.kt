@@ -23,10 +23,7 @@ class WaterRepository(private val db: AppDatabase) {
                 motivationalStyle = "waterFacts",
                 overlayTheme = "midnight-water",
                 notificationSound = "tone1",
-                isPremium = false,
-                streakCount = 3,
-                bestStreak = 7,
-                totalCompletions = 18
+                isPremium = false
             )
             db.userProfileDao().insertOrUpdateProfile(profile)
         }
@@ -204,21 +201,9 @@ class WaterRepository(private val db: AppDatabase) {
             completedAt = System.currentTimeMillis(),
             snoozeCount = snoozeCount
         )
+        // Streaks and totals are computed from the completion log (see HabitStats), so
+        // there's no counter to bump here.
         db.completionLogDao().insertLog(log)
-
-        // Bump profile statistics
-        val profile = db.userProfileDao().getUserProfileDirect() ?: UserProfile()
-        val newStreak = profile.streakCount + 1
-        val newBest = maxOf(profile.bestStreak, newStreak)
-        val newTotal = profile.totalCompletions + 1
-
-        db.userProfileDao().insertOrUpdateProfile(
-            profile.copy(
-                streakCount = newStreak,
-                bestStreak = newBest,
-                totalCompletions = newTotal
-            )
-        )
 
         // Confirming resets the snooze count, so the next time this reminder fires it
         // again has its full 2-snooze allowance rather than staying maxed out forever.

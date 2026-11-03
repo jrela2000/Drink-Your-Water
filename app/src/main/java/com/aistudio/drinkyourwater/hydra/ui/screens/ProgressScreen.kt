@@ -37,7 +37,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aistudio.drinkyourwater.hydra.data.model.CompletionLog
-import com.aistudio.drinkyourwater.hydra.data.model.UserProfile
+import com.aistudio.drinkyourwater.hydra.data.model.Reminder
+import com.aistudio.drinkyourwater.hydra.data.stats.HabitStats
+import androidx.compose.runtime.remember
 import com.aistudio.drinkyourwater.hydra.ui.components.DayProgress
 import com.aistudio.drinkyourwater.hydra.ui.components.WeeklyChart
 import com.aistudio.drinkyourwater.hydra.ui.theme.ConfirmGreen
@@ -49,18 +51,15 @@ import java.util.Locale
 
 @Composable
 fun ProgressScreen(
-    userProfile: UserProfile,
+    reminders: List<Reminder>,
     completionLogs: List<CompletionLog>
 ) {
-    val weeklyData = listOf(
-        DayProgress("Mon", 6, 6),
-        DayProgress("Tue", 5, 6),
-        DayProgress("Wed", 6, 6),
-        DayProgress("Thu", 4, 6),
-        DayProgress("Fri", 6, 6),
-        DayProgress("Sat", 6, 6),
-        DayProgress("Sun", 5, 6, isToday = true)
-    )
+    val stats = remember(completionLogs, reminders) {
+        HabitStats.snapshot(completionLogs, reminders, System.currentTimeMillis())
+    }
+    val weeklyData = stats.week.map {
+        DayProgress(it.label, it.completed, it.planned, isToday = it.isToday)
+    }
 
     Scaffold(
         topBar = {
@@ -110,7 +109,7 @@ fun ProgressScreen(
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = "🔥 ${userProfile.streakCount}",
+                                text = "🔥 ${stats.currentStreak}",
                                 style = MaterialTheme.typography.displaySmall.copy(
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 26.sp
@@ -133,7 +132,7 @@ fun ProgressScreen(
 
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = "🏆 ${userProfile.bestStreak}",
+                                text = "🏆 ${stats.bestStreak}",
                                 style = MaterialTheme.typography.displaySmall.copy(
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 26.sp
@@ -156,7 +155,7 @@ fun ProgressScreen(
 
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = "💧 ${userProfile.totalCompletions}",
+                                text = "💧 ${stats.totalCompletions}",
                                 style = MaterialTheme.typography.displaySmall.copy(
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 26.sp
@@ -164,7 +163,7 @@ fun ProgressScreen(
                                 color = FreshBlue
                             )
                             Text(
-                                text = "Total Hydrations",
+                                text = "Total Check-ins",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -191,11 +190,11 @@ fun ProgressScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        MilestoneRow("7-Day Water Habit Master", userProfile.streakCount, 7)
+                        MilestoneRow("7-Day Water Habit Master", stats.currentStreak, 7)
                         Spacer(modifier = Modifier.height(10.dp))
-                        MilestoneRow("30-Day Hydration Warrior", userProfile.streakCount, 30)
+                        MilestoneRow("30-Day Hydration Warrior", stats.currentStreak, 30)
                         Spacer(modifier = Modifier.height(10.dp))
-                        MilestoneRow("100-Day Centurion", userProfile.streakCount, 100)
+                        MilestoneRow("100-Day Centurion", stats.currentStreak, 100)
                     }
                 }
             }

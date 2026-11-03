@@ -1,0 +1,137 @@
+name: Android Release
+
+# Manual only: Actions tab > "Android Release" > Run workflow.
+# Builds a signed release App Bundle (.aab) to upload to Google Play Console. Download it
+# from the run's "android-release-aab" artifact.
+#
+# Needs these repository secrets (Settings > Secrets and variables > Actions):
+#   ANDROID_KEYSTORE_BASE64    the upload keystore (my-upload-key.jks), base64-encoded
+#   ANDROID_KEYSTORE_PASSWORD  the keystore's password
+#   ANDROID_KEY_PASSWORD       the key's password (often the same as the keystore's)
+#   ANDROID_KEY_ALIAS          optional; defaults to "upload"
+#
+# Version code = 100 + this workflow's run number, so every build is higher than the last
+# (and higher than any version code 1 built by hand).
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: "Version name shown in Play (e.g. 1.0, 1.0.1)"
+        required: true
+        default: "1.0"
+
+concurrency:
+  group: android-release
+  cancel-in-progress: false
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      KEY_ALIAS_SECRET: ${{ secrets.ANDROID_KEY_ALIAS }}
+      VERSION_NAME: ${{ inputs.version_name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Restore upload keystore
+        run: |
+          missing=""
+          [ -n "$KEYSTORE_B64" ] || missing="$missing ANDROID_KEYSTORE_BASE64"
+          [ -n "$STORE_PASSWORD" ] || missing="$missing ANDROID_KEYSTORE_PASSWORD"
+          [ -n "$KEY_PASSWORD" ] || missing="$missing ANDROID_KEY_PASSWORD"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing repository secrets:$missing (see the comment at the top of this workflow)."
+            exit 1
+          fi
+          if ! [[ "$VERSION_NAME" =~ ^[0-9]+(\.[0-9]+){0,3}$ ]]; then
+            echo "::error::Version name must look like 1.0 or 1.0.1."
+            exit 1
+          fi
+
+          keystore="$RUNNER_TEMP/upload.jks"
+          # Tolerates line breaks or spaces pasted into the secret.
+          if ! printf '%s' "$KEYSTORE_B64" | tr -d ' \r\n' | base64 -d > "$keystore" 2>/dev/null || [ ! -s "$keystore" ]; then
+            echo "::error::ANDROID_KEYSTORE_BASE64 isn't valid base64. Re-encode my-upload-key.jks and paste the whole output."
+            exit 1
+          fi
+
+          alias="${KEY_ALIAS_SECRET:-upload}"
+          if ! keytool -list -keystore "$keystore" -storepass "$STORE_PASSWORD" > "$RUNNER_TEMP/aliases.txt" 2>&1; then
+            echo "::error::Couldn't open the keystore. Check ANDROID_KEYSTORE_PASSWORD, and that ANDROID_KEYSTORE_BASE64 is my-upload-key.jks."
+            rm -f "$keystore"
+            exit 1
+          fi
+          if ! keytool -list -keystore "$keystore" -storepass "$STORE_PASSWORD" -alias "$alias" > /dev/null 2>&1; then
+            found=$(grep -E ', (PrivateKeyEntry|SecretKeyEntry|trustedCertEntry),' "$RUNNER_TEMP/aliases.txt" | cut -d, -f1 | paste -sd ' ' -)
+            echo "::error::The keystore has no key named \"$alias\". Keys found: ${found:-none}. Set ANDROID_KEY_ALIAS to the right one."
+            rm -f "$keystore"
+            exit 1
+          fi
+          rm -f "$RUNNER_TEMP/aliases.txt"
+
+          {
+            echo "KEYSTORE_PATH=$keystore"
+            echo "KEY_ALIAS=$alias"
+            echo "VERSION_CODE=$((100 + ${{ github.run_number }}))"
+          } >> "$GITHUB_ENV"
+
+      # The debug signing config points at a git-ignored debug.keystore; Gradle configures
+      # every build type, so create a throwaway one.
+      - name: Create debug keystore
+        run: |
+          keytool -genkeypair -keystore debug.keystore -storepass android \
+            -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 \
+            -validity 10000 -dname "CN=Android Debug,O=Android,C=US" > /dev/null
+
+      - name: Unit tests
+        run: ./gradlew :app:testDebugUnitTest
+
+      - name: Build signed release bundle
+        run: |
+          ./gradlew :app:bundleRelease -PversionCode="$VERSION_CODE" -PversionName="$VERSION_NAME"
+          aab=app/build/outputs/bundle/release/app-release.aab
+          test -s "$aab"
+          mv "$aab" "drink-your-water-$VERSION_NAME-$VERSION_CODE.aab"
+
+      - name: Check signature
+        run: |
+          aab="drink-your-water-$VERSION_NAME-$VERSION_CODE.aab"
+          if ! jarsigner -verify "$aab" > "$RUNNER_TEMP/verify.txt" 2>&1; then
+            cat "$RUNNER_TEMP/verify.txt"
+            echo "::error::The bundle isn't signed correctly."
+            exit 1
+          fi
+          sha=$(keytool -printcert -jarfile "$aab" | grep -m1 'SHA256:' | sed 's/.*SHA256: //')
+          {
+            echo "### Signed release bundle"
+            echo ""
+            echo "- File: \`$aab\` (artifact **android-release-aab**)"
+            echo "- Version: $VERSION_NAME (code $VERSION_CODE)"
+            echo "- Upload key SHA-256: \`$sha\`"
+            echo ""
+            echo "The SHA-256 should match **Play Console > Test and release > App integrity > Upload key certificate**."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "Upload key SHA-256: $sha"
+
+      - name: Upload bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-release-aab
+          path: drink-your-water-*.aab
+          if-no-files-found: error
+
+      - name: Remove keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload.jks"
