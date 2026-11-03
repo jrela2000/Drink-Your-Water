@@ -48,6 +48,8 @@ data class UserProfile(
     val notificationSound: String = "tone1", // tone1 | tone2 | tone3 | tone4
     val vacationModeEnd: Long? = null,
     val isPremium: Boolean = false,
+    // Unused since v1.0: stats come from completion_logs via HabitStats. The columns stay so
+    // the database schema doesn't change.
     val streakCount: Int = 0,
     val bestStreak: Int = 0,
     val totalCompletions: Int = 0

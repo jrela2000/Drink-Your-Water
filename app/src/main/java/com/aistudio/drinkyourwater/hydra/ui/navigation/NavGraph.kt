@@ -93,6 +93,7 @@ fun MainAppNavGraph(
                     userProfile = uiState.userProfile,
                     reminders = uiState.reminders,
                     frameworks = uiState.frameworks,
+                    completionLogs = uiState.completionLogs,
                     onToggleReminder = { id, isActive -> viewModel.toggleReminder(id, isActive) },
                     onTriggerLockOverlay = { id -> navController.navigate("lock_overlay/$id") },
                     onEditReminder = { id -> navController.navigate("reminder_setup/$id") },
@@ -106,7 +107,7 @@ fun MainAppNavGraph(
             // Progress Tab
             composable("progress") {
                 ProgressScreen(
-                    userProfile = uiState.userProfile,
+                    reminders = uiState.reminders,
                     completionLogs = uiState.completionLogs
                 )
             }

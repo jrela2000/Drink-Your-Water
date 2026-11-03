@@ -16,3 +16,7 @@
 local.properties
 .env
 debug.keystore
+
+# Signing keys never belong in the repo
+*.jks
+*.p8

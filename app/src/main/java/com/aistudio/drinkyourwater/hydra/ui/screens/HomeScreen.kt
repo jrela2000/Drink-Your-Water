@@ -1,5 +1,8 @@
 package com.aistudio.drinkyourwater.hydra.ui.screens
 
+import androidx.compose.runtime.remember
+import com.aistudio.drinkyourwater.hydra.data.stats.HabitStats
+import com.aistudio.drinkyourwater.hydra.data.model.CompletionLog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -53,6 +56,7 @@ fun HomeScreen(
     userProfile: UserProfile,
     reminders: List<Reminder>,
     frameworks: List<Framework>,
+    completionLogs: List<CompletionLog>,
     onToggleReminder: (Long, Boolean) -> Unit,
     onTriggerLockOverlay: (Long) -> Unit,
     onEditReminder: (Long) -> Unit,
@@ -62,8 +66,9 @@ fun HomeScreen(
     onAddNewReminder: () -> Unit
 ) {
     val activeReminders = reminders.filter { it.isActive }
-    val totalCount = reminders.size
-    val activeCount = activeReminders.size
+    val stats = remember(completionLogs, reminders) {
+        HabitStats.snapshot(completionLogs, reminders, System.currentTimeMillis())
+    }
 
     val activeFrameworks = frameworks.filter { it.status == "active" }
     val draftFrameworks = frameworks.filter { it.status == "draft" }
@@ -149,9 +154,9 @@ fun HomeScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     ProgressRing(
-                        completedCount = activeCount,
-                        totalCount = totalCount,
-                        streakCount = userProfile.streakCount,
+                        completedCount = stats.completedToday,
+                        totalCount = stats.plannedToday,
+                        streakCount = stats.currentStreak,
                         size = 200.dp
                     )
                 }

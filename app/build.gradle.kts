@@ -13,8 +13,9 @@ android {
     applicationId = "com.aistudio.drinkyourwater.hydra"
     minSdk = 24
     targetSdk = 36
-    versionCode = 1
-    versionName = "1.0"
+    // The release workflow passes -PversionCode / -PversionName; local builds use the defaults.
+    versionCode = (project.findProperty("versionCode") as String?)?.toInt() ?: 1
+    versionName = (project.findProperty("versionName") as String?) ?: "1.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -24,7 +25,7 @@ android {
       val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
       storeFile = file(keystorePath)
       storePassword = System.getenv("STORE_PASSWORD")
-      keyAlias = "upload"
+      keyAlias = System.getenv("KEY_ALIAS") ?: "upload"
       keyPassword = System.getenv("KEY_PASSWORD")
     }
     create("debugConfig") {
