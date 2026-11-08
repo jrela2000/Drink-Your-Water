@@ -40,6 +40,10 @@ jobs:
       - name: Render screenshots
         run: ./gradlew :app:testDebugUnitTest --tests '*StoreScreenshotTest' -Proborazzi.test.record=true --stacktrace
 
+      # Play wants 24-bit PNGs; Roborazzi writes RGBA (fully opaque, so dropping alpha is lossless).
+      - name: Flatten to RGB
+        run: mogrify -background white -alpha remove -alpha off app/build/store-screenshots/*.png
+
       - name: Check sizes
         run: |
           python3 - <<'PY'
@@ -48,10 +52,11 @@ jobs:
           assert files, "no screenshots were written"
           for f in files:
               with open(f, "rb") as fh:
-                  head = fh.read(24)
+                  head = fh.read(26)
               w, h = struct.unpack(">II", head[16:24])
               print(f"{f}: {w}x{h}")
               assert (w, h) == (1080, 2160), f"{f} is {w}x{h}, expected 1080x2160"
+              assert head[25] == 2, f"{f} has an alpha channel or palette (PNG color type {head[25]})"
           PY
 
       - name: Upload screenshots
