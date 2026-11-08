@@ -54,8 +54,7 @@ import com.aistudio.drinkyourwater.hydra.ui.theme.MidnightWater
 
 @Composable
 fun OnboardingScreen(
-    onCompleteOnboarding: (String) -> Unit,
-    onNavigateToBuilder: () -> Unit
+    onCompleteOnboarding: (String) -> Unit
 ) {
     var step by remember { mutableIntStateOf(1) }
     var selectedMotivationalStyle by remember { mutableStateOf("waterFacts") }
@@ -106,13 +105,7 @@ fun OnboardingScreen(
                         onNext = { step = 6 }
                     )
                     6 -> OnboardingStep6(
-                        onBuildCustom = {
-                            onCompleteOnboarding(selectedMotivationalStyle)
-                            onNavigateToBuilder()
-                        },
-                        onStartWaterOnly = {
-                            onCompleteOnboarding(selectedMotivationalStyle)
-                        }
+                        onStartWater = { onCompleteOnboarding(selectedMotivationalStyle) }
                     )
                 }
             }
@@ -428,8 +421,7 @@ private fun OnboardingStep5(
 
 @Composable
 private fun OnboardingStep6(
-    onBuildCustom: () -> Unit,
-    onStartWaterOnly: () -> Unit
+    onStartWater: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -440,14 +432,14 @@ private fun OnboardingStep6(
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "Build Custom Habits",
+                text = "More Reminders Coming Soon",
                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = "Start with water, or build lock overlays for medications, movement, study time, prayer, and vitamins.",
+                text = "Water check-ins are ready now. Lock overlays for medications, movement, study time, prayer, and vitamins are on the way.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -459,18 +451,11 @@ private fun OnboardingStep6(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             RippleButton(
-                onClick = onBuildCustom,
+                onClick = onStartWater,
                 modifier = Modifier.fillMaxWidth(),
-                testTag = "build_custom_habit_btn"
+                testTag = "finish_onboarding_btn"
             ) {
-                Text("Build a Custom Habit Framework", fontWeight = FontWeight.Bold)
-            }
-
-            TextButton(
-                onClick = onStartWaterOnly,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Start With Water Only", color = FreshBlue)
+                Text("Start With Water", fontWeight = FontWeight.Bold)
             }
         }
     }

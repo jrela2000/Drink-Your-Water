@@ -45,7 +45,6 @@ import androidx.compose.ui.unit.sp
 import com.aistudio.drinkyourwater.hydra.data.model.Framework
 import com.aistudio.drinkyourwater.hydra.data.model.Reminder
 import com.aistudio.drinkyourwater.hydra.data.model.UserProfile
-import com.aistudio.drinkyourwater.hydra.ui.components.DraftFrameworkCard
 import com.aistudio.drinkyourwater.hydra.ui.components.ProgressRing
 import com.aistudio.drinkyourwater.hydra.ui.components.ReminderCard
 import com.aistudio.drinkyourwater.hydra.ui.theme.FreshBlue
@@ -61,8 +60,6 @@ fun HomeScreen(
     onTriggerLockOverlay: (Long) -> Unit,
     onEditReminder: (Long) -> Unit,
     onNavigateToSettings: () -> Unit,
-    onNavigateToBuilder: () -> Unit,
-    onNavigateToActivate: () -> Unit,
     onAddNewReminder: () -> Unit
 ) {
     val activeReminders = reminders.filter { it.isActive }
@@ -71,8 +68,6 @@ fun HomeScreen(
     }
 
     val activeFrameworks = frameworks.filter { it.status == "active" }
-    val draftFrameworks = frameworks.filter { it.status == "draft" }
-    val hasCustomFramework = frameworks.any { !it.isWater }
 
     Scaffold(
         topBar = {
@@ -162,14 +157,12 @@ fun HomeScreen(
                 }
             }
 
-            // Quick Banner for Custom Framework Builder
+            // Custom reminder types are not available yet; this teaser replaces the builder entry.
             item {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(20.dp))
-                        .clickable { onNavigateToBuilder() }
-                        .testTag("build_custom_framework_banner"),
+                        .testTag("more_reminders_coming_soon"),
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = FreshBlue.copy(alpha = 0.12f)
@@ -184,29 +177,31 @@ fun HomeScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Build Custom Habit Framework",
+                                text = "More Reminder Types",
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "Medications, movement, study, prayer & lock-screen accountability.",
+                                text = "Medications, movement, study, prayer & more lock-screen accountability are on the way.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(top = 2.dp)
                             )
                         }
 
+                        Spacer(modifier = Modifier.width(12.dp))
+
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(FreshBlue)
+                                .background(FreshBlue.copy(alpha = 0.2f))
                                 .padding(horizontal = 12.dp, vertical = 8.dp)
                         ) {
                             Text(
-                                text = "Create +",
+                                text = "Coming soon",
                                 style = MaterialTheme.typography.labelMedium.copy(
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.White
+                                    color = FreshBlue
                                 )
                             )
                         }
@@ -232,49 +227,6 @@ fun HomeScreen(
                     onTriggerLockOverlay = { onTriggerLockOverlay(reminder.id) },
                     onEditReminder = { onEditReminder(reminder.id) }
                 )
-            }
-
-            // Drafts / suggested custom frameworks the user hasn't built yet
-            if (draftFrameworks.isNotEmpty() || !hasCustomFramework) {
-                item {
-                    Text(
-                        text = "Explore Custom Habit Lock Overlays",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(top = 16.dp)
-                    )
-                }
-
-                if (draftFrameworks.isNotEmpty()) {
-                    items(draftFrameworks, key = { it.id }) { draft ->
-                        DraftFrameworkCard(
-                            framework = draft,
-                            onActivateTap = onNavigateToActivate
-                        )
-                    }
-                } else {
-                    // Default draft presets
-                    item {
-                        DraftFrameworkCard(
-                            framework = Framework(
-                                id = 991,
-                                name = "Medication & Supplement Schedule",
-                                status = "draft"
-                            ),
-                            onActivateTap = onNavigateToActivate
-                        )
-                    }
-                    item {
-                        DraftFrameworkCard(
-                            framework = Framework(
-                                id = 992,
-                                name = "Post-Study Movement & Stretch",
-                                status = "draft"
-                            ),
-                            onActivateTap = onNavigateToActivate
-                        )
-                    }
-                }
             }
 
             item {

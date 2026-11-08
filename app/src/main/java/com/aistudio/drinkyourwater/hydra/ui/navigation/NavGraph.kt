@@ -22,7 +22,6 @@ import com.aistudio.drinkyourwater.hydra.ui.screens.OnboardingScreen
 import com.aistudio.drinkyourwater.hydra.ui.screens.ProgressScreen
 import com.aistudio.drinkyourwater.hydra.ui.screens.ReminderSetupScreen
 import com.aistudio.drinkyourwater.hydra.ui.screens.SettingsScreen
-import com.aistudio.drinkyourwater.hydra.ui.screens.builder.FrameworkBuilderFlow
 import com.aistudio.drinkyourwater.hydra.ui.viewmodel.WaterUiState
 import com.aistudio.drinkyourwater.hydra.ui.viewmodel.WaterViewModel
 
@@ -80,9 +79,6 @@ fun MainAppNavGraph(
                         navController.navigate("home") {
                             popUpTo("onboarding") { inclusive = true }
                         }
-                    },
-                    onNavigateToBuilder = {
-                        navController.navigate("builder")
                     }
                 )
             }
@@ -98,8 +94,6 @@ fun MainAppNavGraph(
                     onTriggerLockOverlay = { id -> navController.navigate("lock_overlay/$id") },
                     onEditReminder = { id -> navController.navigate("reminder_setup/$id") },
                     onNavigateToSettings = { navController.navigate("settings") },
-                    onNavigateToBuilder = { navController.navigate("builder") },
-                    onNavigateToActivate = { navController.navigate("builder") },
                     onAddNewReminder = { navController.navigate("reminder_setup/-1") }
                 )
             }
@@ -184,26 +178,8 @@ fun MainAppNavGraph(
                 )
             }
 
-            // Framework Builder Route
-            composable("builder") {
-                FrameworkBuilderFlow(
-                    onCompleteBuilderActivate = { name, remindersList, theme, motivationalContent, customMessage ->
-                        viewModel.createFrameworkWithReminders(
-                            name = name,
-                            reminders = remindersList,
-                            theme = theme,
-                            motivationalContent = motivationalContent,
-                            customMessage = customMessage,
-                            onComplete = {
-                                navController.navigate("home") {
-                                    popUpTo("builder") { inclusive = true }
-                                }
-                            }
-                        )
-                    },
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            }
+            // The custom framework builder (ui/screens/builder) is not routed in this build: more
+            // reminder types ship later behind a subscription. Re-register a "builder" route then.
         }
     }
 }

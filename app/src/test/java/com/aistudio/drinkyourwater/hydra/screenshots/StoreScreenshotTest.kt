@@ -95,7 +95,7 @@ class StoreScreenshotTest {
         }
     }
 
-    @Test fun onboardingLight() = shoot("01-onboarding", dark = false) { OnboardingScreen({}, {}) }
+    @Test fun onboardingLight() = shoot("01-onboarding", dark = false) { OnboardingScreen({}) }
 
     @Test fun homeLight() = shoot("02-home", dark = false) { withNav("home") { home() } }
 
@@ -121,8 +121,6 @@ class StoreScreenshotTest {
         onTriggerLockOverlay = {},
         onEditReminder = {},
         onNavigateToSettings = {},
-        onNavigateToBuilder = {},
-        onNavigateToActivate = {},
         onAddNewReminder = {}
     )
 
