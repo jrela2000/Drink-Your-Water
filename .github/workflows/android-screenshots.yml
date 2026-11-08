@@ -10,7 +10,7 @@ on:
   # Temporary: lets this branch run before the workflow exists on main. Remove when merged.
   push:
     branches: [claude/android-store-screenshots]
-    paths: [".github/workflows/android-screenshots.yml"]
+    paths: [".github/workflows/android-screenshots.yml", "app/src/**"]
 
 concurrency:
   group: android-screenshots
