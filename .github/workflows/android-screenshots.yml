@@ -42,7 +42,14 @@ jobs:
 
       # Play wants 24-bit PNGs; Roborazzi writes RGBA (fully opaque, so dropping alpha is lossless).
       - name: Flatten to RGB
-        run: mogrify -background white -alpha remove -alpha off app/build/store-screenshots/*.png
+        run: |
+          pip install --quiet pillow
+          python3 - <<'PY'
+          import glob
+          from PIL import Image
+          for f in glob.glob("app/build/store-screenshots/*.png"):
+              Image.open(f).convert("RGB").save(f)
+          PY
 
       - name: Check sizes
         run: |
