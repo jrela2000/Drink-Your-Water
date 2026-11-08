@@ -194,12 +194,12 @@ fun SettingsScreen(
 
                             Column {
                                 Text(
-                                    text = "All Habit Reminders Active",
+                                    text = "Water Reminders Active",
                                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = "Water hydration plus any custom habits you build",
+                                    text = "More reminder types are coming soon",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
