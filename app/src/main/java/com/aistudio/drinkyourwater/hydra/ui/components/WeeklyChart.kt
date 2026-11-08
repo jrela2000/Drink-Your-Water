@@ -3,6 +3,7 @@ package com.aistudio.drinkyourwater.hydra.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -34,6 +35,9 @@ data class DayProgress(
     val target: Int,
     val isToday: Boolean = false
 )
+
+// Room above each bar for its count: a 10sp label plus the 4dp gap.
+private val CountLabelHeight = 22.dp
 
 @Composable
 fun WeeklyChart(
@@ -84,31 +88,45 @@ fun WeeklyChart(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
                             .weight(1f)
-                            .fillMaxHeight(),
-                        verticalArrangement = Arrangement.Bottom
+                            .fillMaxHeight()
                     ) {
-                        Text(
-                            text = "${day.count}",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 10.sp
-                            ),
-                            color = if (day.isToday) FreshBlue else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        Box(
+                        // The bar area takes whatever height the day label leaves, so a full bar
+                        // can't push the count above it or the label below it out of the column.
+                        BoxWithConstraints(
                             modifier = Modifier
-                                .width(18.dp)
-                                .fillMaxHeight(barHeightFraction)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(
-                                    if (day.isToday) FreshBlue
-                                    else if (day.target > 0 && day.count >= day.target) IceTeal
-                                    else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                                .weight(1f)
+                                .fillMaxWidth(),
+                            contentAlignment = Alignment.BottomCenter
+                        ) {
+                            val barHeight = (maxHeight - CountLabelHeight).coerceAtLeast(0.dp) * barHeightFraction
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Bottom
+                            ) {
+                                Text(
+                                    text = "${day.count}",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 10.sp
+                                    ),
+                                    color = if (day.isToday) FreshBlue else MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                        )
+
+                                Spacer(modifier = Modifier.height(4.dp))
+
+                                Box(
+                                    modifier = Modifier
+                                        .width(18.dp)
+                                        .height(barHeight)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(
+                                            if (day.isToday) FreshBlue
+                                            else if (day.target > 0 && day.count >= day.target) IceTeal
+                                            else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                                        )
+                                )
+                            }
+                        }
 
                         Spacer(modifier = Modifier.height(8.dp))
 
