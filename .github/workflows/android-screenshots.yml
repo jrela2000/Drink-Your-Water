@@ -1,0 +1,78 @@
+name: Android Screenshots
+
+# Manual only: Actions tab > "Android Screenshots" > Run workflow.
+# Renders the real screens with sample data (StoreScreenshotTest, Robolectric + Roborazzi, no
+# emulator) and uploads Google Play phone screenshots, 1080x2160, as the
+# "android-store-screenshots" artifact.
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: android-screenshots
+  cancel-in-progress: false
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # The debug signing config points at a debug.keystore that's git-ignored.
+      - name: Create debug keystore
+        run: |
+          keytool -genkeypair -v -keystore debug.keystore -storepass android \
+            -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 \
+            -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+
+      - name: Render screenshots
+        run: ./gradlew :app:testDebugUnitTest --tests '*StoreScreenshotTest' -Proborazzi.test.record=true --stacktrace
+
+      # Play wants 24-bit PNGs; Roborazzi writes RGBA (fully opaque, so dropping alpha is lossless).
+      - name: Flatten to RGB
+        run: |
+          pip install --quiet pillow
+          python3 - <<'PY'
+          import glob
+          from PIL import Image
+          for f in glob.glob("app/build/store-screenshots/*.png"):
+              Image.open(f).convert("RGB").save(f)
+          PY
+
+      - name: Check sizes
+        run: |
+          python3 - <<'PY'
+          import glob, struct
+          files = sorted(glob.glob("app/build/store-screenshots/*.png"))
+          assert files, "no screenshots were written"
+          for f in files:
+              with open(f, "rb") as fh:
+                  head = fh.read(26)
+              w, h = struct.unpack(">II", head[16:24])
+              print(f"{f}: {w}x{h}")
+              assert (w, h) == (1080, 2160), f"{f} is {w}x{h}, expected 1080x2160"
+              assert head[25] == 2, f"{f} has an alpha channel or palette (PNG color type {head[25]})"
+          PY
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-store-screenshots
+          path: app/build/store-screenshots/*.png
+          if-no-files-found: error
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-screenshot-test-reports
+          path: app/build/reports/tests/
+          if-no-files-found: ignore

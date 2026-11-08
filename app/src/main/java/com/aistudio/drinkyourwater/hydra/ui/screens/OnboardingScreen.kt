@@ -180,7 +180,7 @@ private fun OnboardingStep1(onStartWater: () -> Unit, onShowHowItWorks: () -> Un
                 modifier = Modifier.fillMaxWidth(),
                 testTag = "start_water_free_btn"
             ) {
-                Text("Start With Water (Free Forever)", fontWeight = FontWeight.Bold)
+                Text("Start With Water", fontWeight = FontWeight.Bold)
             }
 
             TextButton(
@@ -440,14 +440,14 @@ private fun OnboardingStep6(
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "Unlock Custom Habit Frameworks",
+                text = "Build Custom Habits",
                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = "Water is free forever! You can also build lock overlays for medications, movement, study time, prayer, and vitamins.",
+                text = "Start with water, or build lock overlays for medications, movement, study time, prayer, and vitamins.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
