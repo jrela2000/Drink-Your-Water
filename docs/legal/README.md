@@ -16,7 +16,7 @@ sending anything.
 | Website | https://jarrodqsimpson.com |
 | Privacy Policy URL | https://jarrodqsimpson.com/drink-your-water/privacy |
 | Terms URL | https://jarrodqsimpson.com/drink-your-water/terms |
-| Effective date | October 31, 2026 |
+| Effective date | November 9, 2026 |
 | Governing law | State of Illinois, USA |
 | Store name | Drink Your Water: Check-ins |
 
@@ -25,9 +25,14 @@ the effective date whenever either document changes.
 
 ## Facts the drafts rely on (re-check if the code changes)
 
-- **No network access:** the Android manifest has no `INTERNET` permission, and neither app
-  makes network requests.
-- **No third-party SDKs:** there are no analytics, ads, crash-reporting or tracking libraries.
+- **Network access (Android):** the manifest declares `INTERNET`, `ACCESS_NETWORK_STATE` and
+  `com.android.vending.BILLING` for the RevenueCat subscription SDK. Network calls happen only
+  when the RevenueCat key is set (billing on); reminders and history are never sent.
+- **Third-party SDKs:** RevenueCat (subscriptions only). No analytics, ads, crash-reporting or
+  tracking libraries.
+- **iPhone:** a Base44-backed account (email/password or Google) stores reminders, frameworks,
+  profile settings and check-in history on Base44. Settings > Delete Account removes those
+  records and signs out; removing the login itself is by email request.
 - **On-device storage:**
   - Android: a Room database plus one SharedPreferences flag for Strict Mode.
   - iPhone: one JSON file in Application Support.
@@ -40,12 +45,12 @@ the effective date whenever either document changes.
 
 ## Store privacy answers that match these drafts
 
-- **Apple App Store, App Privacy:** "Data Not Collected." No tracking.
-- **Google Play, Data safety:**
-  - Does the app collect or share any required user data types? **No.**
-  - Is all user data encrypted in transit? Not applicable, because nothing is transmitted.
-  - Can users request that data be deleted? Data stays on the device and is deleted in the
-    app or by uninstalling.
+- **Apple App Store, App Privacy:** must now declare account data (email), user content
+  and purchases/identifiers handled by Base44 and RevenueCat. "Data Not Collected" is no
+  longer accurate for the iPhone app.
+- **Google Play, Data safety (updated Nov 9, 2026):** collects Purchase history and Device or
+  other IDs (RevenueCat), required, app functionality, not shared (service provider),
+  encrypted in transit. Deletion question left blank.
 - **Both stores:** add the Privacy Policy URL to the store listing, and link both pages from
   the app's project page on jarrodqsimpson.com.
 
