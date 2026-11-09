@@ -98,7 +98,8 @@ jobs:
             -validity 10000 -dname "CN=Android Debug,O=Android,C=US" > /dev/null
 
       - name: Unit tests
-        run: ./gradlew :app:testDebugUnitTest
+        # Billing off for tests: Robolectric denies INTERNET, so RevenueCat refuses to start.
+        run: ./gradlew :app:testDebugUnitTest -PrevenuecatAndroidKey=
 
       - name: Build signed release bundle
         run: |
