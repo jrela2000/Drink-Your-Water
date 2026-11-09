@@ -30,9 +30,9 @@ the effective date whenever either document changes.
   when the RevenueCat key is set (billing on); reminders and history are never sent.
 - **Third-party SDKs:** RevenueCat (subscriptions only). No analytics, ads, crash-reporting or
   tracking libraries.
-- **iPhone:** a Base44-backed account (email/password or Google) stores reminders, frameworks,
-  profile settings and check-in history on Base44. Settings > Delete Account removes those
-  records and signs out; removing the login itself is by email request.
+- **iPhone:** the native SwiftUI app in `ios/` (the one in the App Store, bundle
+  `com.aistudio.drinkyourwater.hydra`) has no account, no purchases and no network access. The
+  separate Base44 web app (`com.drinkyourwater.app`) is not published and isn't covered here.
 - **On-device storage:**
   - Android: a Room database plus one SharedPreferences flag for Strict Mode.
   - iPhone: one JSON file in Application Support.
@@ -45,9 +45,8 @@ the effective date whenever either document changes.
 
 ## Store privacy answers that match these drafts
 
-- **Apple App Store, App Privacy:** must now declare account data (email), user content
-  and purchases/identifiers handled by Base44 and RevenueCat. "Data Not Collected" is no
-  longer accurate for the iPhone app.
+- **Apple App Store, App Privacy:** "Data Not Collected" is accurate for iPhone 1.0. Revisit it
+  when the iPhone app adds subscriptions (RevenueCat: purchase history and an anonymous ID).
 - **Google Play, Data safety (updated Nov 9, 2026):** collects Purchase history and Device or
   other IDs (RevenueCat), required, app functionality, not shared (service provider),
   encrypted in transit. Deletion question left blank.
