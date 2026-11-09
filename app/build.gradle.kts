@@ -17,6 +17,13 @@ android {
     versionCode = (project.findProperty("versionCode") as String?)?.toInt() ?: 1
     versionName = (project.findProperty("versionName") as String?) ?: "1.0"
 
+    // RevenueCat public SDK key (goog_...). Blank keeps billing off, so the custom habit builder
+    // stays behind "coming soon". The key is public, but kept out of git: pass
+    // -PrevenuecatAndroidKey=... or set REVENUECAT_ANDROID_KEY.
+    val revenueCatKey = (project.findProperty("revenuecatAndroidKey") as String?)
+      ?: System.getenv("REVENUECAT_ANDROID_KEY") ?: ""
+    buildConfigField("String", "REVENUECAT_API_KEY", "\"$revenueCatKey\"")
+
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
@@ -93,6 +100,7 @@ dependencies {
   implementation(libs.coil.compose)
   implementation(libs.kotlinx.coroutines.android)
   implementation(libs.kotlinx.coroutines.core)
+  implementation(libs.revenuecat.purchases)
   // implementation(libs.play.services.location)
   testImplementation(libs.androidx.compose.ui.test.junit4)
   testImplementation(libs.androidx.core)

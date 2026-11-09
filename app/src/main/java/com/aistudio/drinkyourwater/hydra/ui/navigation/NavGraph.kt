@@ -6,7 +6,14 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import android.app.Activity
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -16,12 +23,16 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.aistudio.drinkyourwater.hydra.data.model.Reminder
+import com.aistudio.drinkyourwater.hydra.billing.FrameworkAccess
+import com.aistudio.drinkyourwater.hydra.billing.PurchaseResult
 import com.aistudio.drinkyourwater.hydra.ui.screens.HomeScreen
+import com.aistudio.drinkyourwater.hydra.ui.screens.PaywallScreen
 import com.aistudio.drinkyourwater.hydra.ui.screens.LockOverlayScreen
 import com.aistudio.drinkyourwater.hydra.ui.screens.OnboardingScreen
 import com.aistudio.drinkyourwater.hydra.ui.screens.ProgressScreen
 import com.aistudio.drinkyourwater.hydra.ui.screens.ReminderSetupScreen
 import com.aistudio.drinkyourwater.hydra.ui.screens.SettingsScreen
+import com.aistudio.drinkyourwater.hydra.ui.screens.builder.FrameworkBuilderFlow
 import com.aistudio.drinkyourwater.hydra.ui.viewmodel.WaterUiState
 import com.aistudio.drinkyourwater.hydra.ui.viewmodel.WaterViewModel
 
@@ -35,6 +46,10 @@ fun MainAppNavGraph(
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val strictMode by viewModel.strictMode.collectAsState()
+    val billing by viewModel.billingState.collectAsState()
+    val context = LocalContext.current
+    var paywallBusy by remember { mutableStateOf(false) }
+    var paywallMessage by remember { mutableStateOf<String?>(null) }
     val currentRoute = navBackStackEntry?.destination?.route ?: "home"
 
     val isMainTab = currentRoute in listOf("home", "progress", "settings")
@@ -79,7 +94,8 @@ fun MainAppNavGraph(
                         navController.navigate("home") {
                             popUpTo("onboarding") { inclusive = true }
                         }
-                    }
+                    },
+                    moreTypesAvailable = billing.isAvailable
                 )
             }
 
@@ -94,7 +110,13 @@ fun MainAppNavGraph(
                     onTriggerLockOverlay = { id -> navController.navigate("lock_overlay/$id") },
                     onEditReminder = { id -> navController.navigate("reminder_setup/$id") },
                     onNavigateToSettings = { navController.navigate("settings") },
-                    onAddNewReminder = { navController.navigate("reminder_setup/-1") }
+                    onAddNewReminder = { navController.navigate("reminder_setup/-1") },
+                    billing = billing,
+                    onNavigateToBuilder = {
+                        val active = uiState.frameworks.count { !it.isWater && it.status == "active" }
+                        // Subscribers with room left go straight to the builder; everyone else sees plans.
+                        navController.navigate(if (FrameworkAccess.canCreate(billing.tier, active)) "builder" else "paywall")
+                    }
                 )
             }
 
@@ -121,7 +143,9 @@ fun MainAppNavGraph(
                         }
                     },
                     strictMode = strictMode,
-                    onUpdateStrictMode = { viewModel.setStrictMode(it) }
+                    onUpdateStrictMode = { viewModel.setStrictMode(it) },
+                    billing = billing,
+                    onOpenPaywall = { navController.navigate("paywall") }
                 )
             }
 
@@ -178,8 +202,69 @@ fun MainAppNavGraph(
                 )
             }
 
-            // The custom framework builder (ui/screens/builder) is not routed in this build: more
-            // reminder types ship later behind a subscription. Re-register a "builder" route then.
+            // Subscription plans. Only reachable when billing is configured.
+            composable("paywall") {
+                PaywallScreen(
+                    billing = billing,
+                    busy = paywallBusy,
+                    message = paywallMessage,
+                    onSubscribe = { plan ->
+                        val activity = context as? Activity ?: return@PaywallScreen
+                        paywallBusy = true
+                        paywallMessage = null
+                        viewModel.purchase(activity, plan) { result ->
+                            paywallBusy = false
+                            when (result) {
+                                is PurchaseResult.Success -> navController.popBackStack()
+                                is PurchaseResult.Failed -> paywallMessage = result.reason
+                                PurchaseResult.Cancelled -> Unit
+                            }
+                        }
+                    },
+                    onRestore = {
+                        paywallBusy = true
+                        paywallMessage = null
+                        viewModel.restorePurchases { result ->
+                            paywallBusy = false
+                            when (result) {
+                                is PurchaseResult.Success ->
+                                    if (result.tier != null) navController.popBackStack()
+                                    else paywallMessage = "No previous purchase found for this Google account."
+                                is PurchaseResult.Failed -> paywallMessage = result.reason
+                                PurchaseResult.Cancelled -> Unit
+                            }
+                        }
+                    },
+                    onManageSubscription = {
+                        context.startActivity(
+                            Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/account/subscriptions"))
+                        )
+                    },
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            // Framework Builder Route: subscription-gated; the ViewModel re-checks before saving.
+            composable("builder") {
+                FrameworkBuilderFlow(
+                    onCompleteBuilderActivate = { name, remindersList, theme, motivationalContent, customMessage ->
+                        viewModel.createFrameworkWithReminders(
+                            name = name,
+                            reminders = remindersList,
+                            theme = theme,
+                            motivationalContent = motivationalContent,
+                            customMessage = customMessage,
+                            onBlocked = { navController.navigate("paywall") { popUpTo("builder") { inclusive = true } } },
+                            onComplete = {
+                                navController.navigate("home") {
+                                    popUpTo("builder") { inclusive = true }
+                                }
+                            }
+                        )
+                    },
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
         }
     }
 }

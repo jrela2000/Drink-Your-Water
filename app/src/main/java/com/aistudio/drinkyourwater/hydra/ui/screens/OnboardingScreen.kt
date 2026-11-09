@@ -54,7 +54,8 @@ import com.aistudio.drinkyourwater.hydra.ui.theme.MidnightWater
 
 @Composable
 fun OnboardingScreen(
-    onCompleteOnboarding: (String) -> Unit
+    onCompleteOnboarding: (String) -> Unit,
+    moreTypesAvailable: Boolean = false
 ) {
     var step by remember { mutableIntStateOf(1) }
     var selectedMotivationalStyle by remember { mutableStateOf("waterFacts") }
@@ -105,6 +106,7 @@ fun OnboardingScreen(
                         onNext = { step = 6 }
                     )
                     6 -> OnboardingStep6(
+                        moreTypesAvailable = moreTypesAvailable,
                         onStartWater = { onCompleteOnboarding(selectedMotivationalStyle) }
                     )
                 }
@@ -421,6 +423,7 @@ private fun OnboardingStep5(
 
 @Composable
 private fun OnboardingStep6(
+    moreTypesAvailable: Boolean,
     onStartWater: () -> Unit
 ) {
     Column(
@@ -432,14 +435,18 @@ private fun OnboardingStep6(
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "More Reminders Coming Soon",
+                text = if (moreTypesAvailable) "Water Is Free, Always" else "More Reminders Coming Soon",
                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = "Water check-ins are ready now. Lock overlays for medications, movement, study time, prayer, and vitamins are on the way.",
+                text = if (moreTypesAvailable) {
+                    "Water check-ins are free. You can add lock overlays for medications, movement, study time, prayer, and vitamins later with a subscription."
+                } else {
+                    "Water check-ins are ready now. Lock overlays for medications, movement, study time, prayer, and vitamins are on the way."
+                },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center

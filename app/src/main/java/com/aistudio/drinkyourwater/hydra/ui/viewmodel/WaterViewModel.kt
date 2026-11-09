@@ -3,6 +3,14 @@ package com.aistudio.drinkyourwater.hydra.ui.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import android.app.Activity
+import com.aistudio.drinkyourwater.hydra.HydraApplication
+import com.aistudio.drinkyourwater.hydra.billing.BillingManager
+import com.aistudio.drinkyourwater.hydra.billing.BillingState
+import com.aistudio.drinkyourwater.hydra.billing.DisabledBillingManager
+import com.aistudio.drinkyourwater.hydra.billing.FrameworkAccess
+import com.aistudio.drinkyourwater.hydra.billing.Plan
+import com.aistudio.drinkyourwater.hydra.billing.PurchaseResult
 import com.aistudio.drinkyourwater.hydra.data.db.AppDatabase
 import com.aistudio.drinkyourwater.hydra.data.model.CompletionLog
 import com.aistudio.drinkyourwater.hydra.data.model.Framework
@@ -30,6 +38,16 @@ data class WaterUiState(
 class WaterViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: WaterRepository
+
+    private val billing: BillingManager =
+        (application as? HydraApplication)?.billing ?: DisabledBillingManager
+
+    /** Subscription status and prices; [BillingState.isAvailable] is false when billing is off. */
+    val billingState: StateFlow<BillingState> = billing.state
+
+    init {
+        viewModelScope.launch { if (billing.state.value.isAvailable) billing.refresh() }
+    }
 
     init {
         val db = AppDatabase.getDatabase(application)
@@ -120,9 +138,17 @@ class WaterViewModel(application: Application) : AndroidViewModel(application) {
         theme: String,
         motivationalContent: String,
         customMessage: String,
+        onBlocked: () -> Unit = {},
         onComplete: (Long) -> Unit
     ) {
         viewModelScope.launch {
+            // Custom habits need a subscription with room left; the UI routes to the paywall
+            // first, this keeps the rule in one place if something else reaches the builder.
+            val active = uiState.value.frameworks.count { !it.isWater && it.status == "active" }
+            if (!FrameworkAccess.canCreate(billing.state.value.tier, active)) {
+                onBlocked()
+                return@launch
+            }
             val id = repository.createFrameworkWithReminders(
                 frameworkName = name,
                 remindersList = reminders,
@@ -135,6 +161,18 @@ class WaterViewModel(application: Application) : AndroidViewModel(application) {
                 .forEach { ReminderScheduler.scheduleReminder(getApplication(), it) }
             onComplete(id)
         }
+    }
+
+    fun purchase(activity: Activity, plan: Plan, onResult: (PurchaseResult) -> Unit) {
+        viewModelScope.launch { onResult(billing.purchase(activity, plan)) }
+    }
+
+    fun restorePurchases(onResult: (PurchaseResult) -> Unit) {
+        viewModelScope.launch { onResult(billing.restore()) }
+    }
+
+    fun refreshBilling() {
+        viewModelScope.launch { billing.refresh() }
     }
 
     fun updateNotificationSound(sound: String) {

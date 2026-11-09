@@ -42,6 +42,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.aistudio.drinkyourwater.hydra.billing.BillingState
 import com.aistudio.drinkyourwater.hydra.data.model.Framework
 import com.aistudio.drinkyourwater.hydra.data.model.Reminder
 import com.aistudio.drinkyourwater.hydra.data.model.UserProfile
@@ -60,7 +61,9 @@ fun HomeScreen(
     onTriggerLockOverlay: (Long) -> Unit,
     onEditReminder: (Long) -> Unit,
     onNavigateToSettings: () -> Unit,
-    onAddNewReminder: () -> Unit
+    onAddNewReminder: () -> Unit,
+    billing: BillingState = BillingState(),
+    onNavigateToBuilder: () -> Unit = {}
 ) {
     val activeReminders = reminders.filter { it.isActive }
     val stats = remember(completionLogs, reminders) {
@@ -157,12 +160,22 @@ fun HomeScreen(
                 }
             }
 
-            // Custom reminder types are not available yet; this teaser replaces the builder entry.
+            // More reminder types: a "coming soon" teaser until billing is configured, then the
+            // entry to the subscription-gated builder.
             item {
+                val activeCustom = frameworks.count { !it.isWater && it.status == "active" }
+                val badge = when {
+                    !billing.isAvailable -> "Coming soon"
+                    billing.tier == null -> "Subscribe"
+                    activeCustom >= billing.tier.frameworkLimit -> "Upgrade"
+                    else -> "Create +"
+                }
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .testTag("more_reminders_coming_soon"),
+                        .clip(RoundedCornerShape(20.dp))
+                        .then(if (billing.isAvailable) Modifier.clickable { onNavigateToBuilder() } else Modifier)
+                        .testTag(if (billing.isAvailable) "build_custom_framework_banner" else "more_reminders_coming_soon"),
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = FreshBlue.copy(alpha = 0.12f)
@@ -177,12 +190,16 @@ fun HomeScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "More Reminder Types",
+                                text = if (billing.isAvailable) "Build Custom Habit Framework" else "More Reminder Types",
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "Medications, movement, study, prayer & more lock-screen accountability are on the way.",
+                                text = if (billing.isAvailable) {
+                                    "Medications, movement, study, prayer & lock-screen accountability."
+                                } else {
+                                    "Medications, movement, study, prayer & more lock-screen accountability are on the way."
+                                },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(top = 2.dp)
@@ -194,14 +211,14 @@ fun HomeScreen(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(FreshBlue.copy(alpha = 0.2f))
+                                .background(if (billing.isAvailable) FreshBlue else FreshBlue.copy(alpha = 0.2f))
                                 .padding(horizontal = 12.dp, vertical = 8.dp)
                         ) {
                             Text(
-                                text = "Coming soon",
+                                text = badge,
                                 style = MaterialTheme.typography.labelMedium.copy(
                                     fontWeight = FontWeight.Bold,
-                                    color = FreshBlue
+                                    color = if (billing.isAvailable) Color.White else FreshBlue
                                 )
                             )
                         }

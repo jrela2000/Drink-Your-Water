@@ -47,6 +47,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.aistudio.drinkyourwater.hydra.billing.BillingState
 import com.aistudio.drinkyourwater.hydra.data.model.UserProfile
 import com.aistudio.drinkyourwater.hydra.ui.components.SoundBottomSheet
 import com.aistudio.drinkyourwater.hydra.ui.components.soundOptions
@@ -63,7 +64,9 @@ fun SettingsScreen(
     onUpdateVacationMode: (Int?) -> Unit,
     onWipeUserDataAndReset: () -> Unit,
     strictMode: Boolean = false,
-    onUpdateStrictMode: (Boolean) -> Unit = {}
+    onUpdateStrictMode: (Boolean) -> Unit = {},
+    billing: BillingState = BillingState(),
+    onOpenPaywall: () -> Unit = {}
 ) {
     var showSoundSheet by remember { mutableStateOf(false) }
     var showStrictModeDialog by remember { mutableStateOf(false) }
@@ -158,7 +161,10 @@ fun SettingsScreen(
             // Subscription Status Card
             item {
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(20.dp))
+                        .then(if (billing.isAvailable) Modifier.clickable { onOpenPaywall() } else Modifier),
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = FreshBlue.copy(alpha = 0.12f)
@@ -194,12 +200,15 @@ fun SettingsScreen(
 
                             Column {
                                 Text(
-                                    text = "Water Reminders Active",
+                                    text = if (billing.isAvailable) (billing.tier?.let { "${it.displayName} plan" } ?: "Free plan") else "Water Reminders Active",
                                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = "More reminder types are coming soon",
+                                    text = if (billing.isAvailable) {
+                                        billing.tier?.let { "Up to ${it.frameworkLimit} custom habits. Tap to change plan." }
+                                            ?: "Water reminders are always free. Tap to see more reminder types."
+                                    } else "More reminder types are coming soon",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )

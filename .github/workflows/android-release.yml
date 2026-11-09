@@ -35,6 +35,8 @@ jobs:
       KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
       KEY_ALIAS_SECRET: ${{ secrets.ANDROID_KEY_ALIAS }}
       VERSION_NAME: ${{ inputs.version_name }}
+      # Optional: blank leaves billing off and custom habits "coming soon".
+      REVENUECAT_ANDROID_KEY: ${{ secrets.REVENUECAT_ANDROID_KEY }}
     steps:
       - uses: actions/checkout@v4
 
